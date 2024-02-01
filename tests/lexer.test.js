@@ -7,23 +7,27 @@ describe("Lexer test", () => {
     beforeAll(async () => {
         let _ = await import('../lexer.js');
         Lexer = _.Lexer;
-    })
+    });
 
     test("NextToken", () => {
-        let input = `## Something`;
+        let input = `## Something\n\n[link to document](./README.md)`;
         let testdata = [
-            {Type: 'HEADING', Literal: '##'},
-            {Type: 'WSPACE', Literal: ' '},
-            {Type: 'CONTENT', Literal: 'S'},
-            {Type: 'CONTENT', Literal: 'o'},
-            {Type: 'CONTENT', Literal: 'm'},
-            {Type: 'CONTENT', Literal: 'e'},
-            {Type: 'CONTENT', Literal: 't'},
-            {Type: 'CONTENT', Literal: 'h'},
-            {Type: 'CONTENT', Literal: 'i'},
-            {Type: 'CONTENT', Literal: 'n'},
-            {Type: 'CONTENT', Literal: 'g'},
-            {Type: 'EOF', Literal: ''},
+            { Type: 'HEADING', Literal: '##' },
+            { Type: 'WSPACE', Literal: ' ' },
+            { Type: 'CONTENT', Literal: 'Something' },
+            { Type: 'EOL', Literal: '\n' },
+            { Type: 'EOL', Literal: '\n' },
+            { Type: '[', Literal: '[' },
+            { Type: 'CONTENT', Literal: 'link' },
+            { Type: 'WSPACE', Literal: ' ' },
+            { Type: 'CONTENT', Literal: 'to' },
+            { Type: 'WSPACE', Literal: ' ' },
+            { Type: 'CONTENT', Literal: 'document' },
+            { Type: ']', Literal: ']' },
+            { Type: '(', Literal: '(' },
+            { Type: 'CONTENT', Literal: './README.md' },
+            { Type: ')', Literal: ')' },
+            { Type: 'EOF', Literal: '' },
         ];
 
         let lex = new Lexer(input);
@@ -41,6 +45,7 @@ describe("Lexer test", () => {
         let input = "### heading3";
         let original = new Lexer(input);
         let duplicate = original.Clone();
+        expect(original === duplicate).toBe(false);
         expect(original.toString() === duplicate.toString()).toBe(true);
         let ot = original.NextToken();
         expect(original.toString() === duplicate.toString()).toBe(false);

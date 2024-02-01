@@ -111,15 +111,28 @@ Lexer.prototype.peekChar = function() {
  **/
 Lexer.prototype.NextToken = function() {
     let token, literal;
+    let delimit = [' ', '\n', '\r', '\t', '[', ']', '(', ')', '{', '}', 0];
 
     switch (this.ch) {
         case ' ':
-            literal = this.readWhile([' ']);
+            literal = this.filter((ch) => ch === ' ');
             token = new Token(WSPACE, literal);
             break;
-        case CRASH:
-            literal = this.readWhile([CRASH]);
+
+        case '#':
+            literal = this.filter((ch) => ch === '#');
             token = new Token(HEADING, literal);
+            break;
+
+        case '\t':
+            literal = this.filter((ch) => ch === '\t');
+            token = new Token(TABS, literal);
+            break;
+
+        case '\n':
+        case '\r':
+            literal = this.ch;
+            token = new Token(EOL, literal);
             break;
 
         case 0:
@@ -128,8 +141,12 @@ Lexer.prototype.NextToken = function() {
             break;
 
         default:
-            literal = this.ch;
-            token = new Token(CONTENT, literal)
+            literal = this.filter((ch) => !delimit.includes(ch));
+            if (literal) {
+                token = new Token(CONTENT, literal);
+            } else {
+                token = new Token(Lookup(this.ch), this.ch);
+            }
             break;
     }
 
@@ -138,20 +155,31 @@ Lexer.prototype.NextToken = function() {
 }
 
 /**
- * continue reading while... 
+ * continue reading while condition
  *
- * @param {string[]} chars - array of Token.Literal values
+ * @param {function} f - conditional filter, returns a boolean 
  * 
  * @returns {string}
  *
  **/
-Lexer.prototype.readWhile = function(chars) {
-    let literal = this.ch;
-
-    while (chars.includes(this.peekChar())) {
-        literal += this.ch;
-        this.readChar();
+Lexer.prototype.filter = function(f) {
+    if (!f(this.ch)) {
+        return
     }
+
+    let literal = '';
+
+    let notFinished = (this.readPosition < this.input.length);
+    
+    for (let ok = notFinished; ok === true && f(this.peekChar()); this.readChar()) {
+        literal += this.ch;
+        ok = (this.readPosition < this.input.length) 
+    }
+
+    if (f(this.ch)) {
+        literal += this.ch;
+    }
+
     return literal;
 }
 
@@ -160,12 +188,17 @@ Lexer.prototype.toString = function() {
 }
 
 Lexer.hydrate = function(state) {
-    let {input, position, readPosition, ch} = JSON.parse(state);
-    let lex = new Lexer(input);
-    if (position) {
-        lex.position = position;
-        lex.readPosition = readposition;
-        lex.ch = ch;
+    let lex;
+    if (state) {
+        try {
+            let obj = JSON.parse(state);
+            lex = new Lexer(obj.input);
+            lex.position = obj.position;
+            lex.readPosition = obj.readPosition,
+            lex.ch = obj.ch;
+        } catch (error) {
+            return new Error(error);
+        }
     }
     return lex;
 }
