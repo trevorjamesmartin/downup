@@ -37,4 +37,18 @@ describe("Lexer test", () => {
 
     });
 
+    test("Clone", () => {
+        let input = "### heading3";
+        let original = new Lexer(input);
+        let duplicate = original.Clone();
+        expect(original.toString() === duplicate.toString()).toBe(true);
+        let ot = original.NextToken();
+        expect(original.toString() === duplicate.toString()).toBe(false);
+        let dt = duplicate.NextToken();
+        expect(original.toString() === duplicate.toString()).toBe(true);
+        expect(ot.Type === dt.Type).toBe(true);
+        expect(ot.Literal === dt.Literal).toBe(true);
+    });
+
 });
+

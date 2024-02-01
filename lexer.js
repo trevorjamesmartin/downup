@@ -155,7 +155,24 @@ Lexer.prototype.readWhile = function(chars) {
     return literal;
 }
 
+Lexer.prototype.toString = function() {
+    return JSON.stringify(this);
+}
+
+Lexer.hydrate = function(state) {
+    let {input, position, readPosition, ch} = JSON.parse(state);
+    let lex = new Lexer(input);
+    if (position) {
+        lex.position = position;
+        lex.readPosition = readposition;
+        lex.ch = ch;
+    }
+    return lex;
+}
+
+Lexer.prototype.Clone = function() {
+    return Lexer.hydrate(this.toString());
+}
 
 export { Lexer };
-
 
