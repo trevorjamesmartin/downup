@@ -12,6 +12,8 @@ class Parser {
 
         this.registerPrefix('[', this.parseLinkToResource)
 
+        this.registerPrefix('HEADING', this.parseHeader)
+
     }
 
 }
@@ -83,7 +85,7 @@ Parser.prototype.filter = function(f) {
 }
 
 
-Parser.prototype.parseLinkToResource = function(foo) { 
+Parser.prototype.parseLinkToResource = function() { 
     let content = this.parseBetween("[", "]");
 
     if (content[0] === "[") {
@@ -102,6 +104,44 @@ Parser.prototype.parseLinkToResource = function(foo) {
     }
 
     return `<a href="${url}">${content}</a>`;
+}
+
+Parser.prototype.parseHeader = function () {
+    let t = this.currentToken;
+    
+    let num = t.Literal.length;
+
+    if (num === 1 && this.peekToken.Type === 'EOL') {
+        this.nextToken();
+        this.nextToken();
+        return "<hr>\n\n";
+    }
+    
+    let el = '';
+    
+    if (num > 0 && num < 8) {
+        // name the element
+        el = `h${num}`;
+    } else {
+        return this.currentToken.Literal;
+    }
+    
+    // expect space
+
+    if (this.peekToken.Type != 'WSPACE') {
+        return this.currentToken.Literal;
+    }
+
+    this.nextToken();
+    this.nextToken();
+
+    let innerText = this.filter((toke) => toke.Type != 'EOL');
+    
+    let result = `<${el}>${innerText}</${el}>\n`;
+    
+    this.nextToken();
+
+    return result;
 }
 
 export { Parser }
