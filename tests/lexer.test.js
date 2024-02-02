@@ -1,14 +1,8 @@
 import("jest");
-
+const { Lexer } = await import('../lexer.js');
 
 describe("Lexer test", () => {
-    let Lexer;
     
-    beforeAll(async () => {
-        let _ = await import('../lexer.js');
-        Lexer = _.Lexer;
-    });
-
     test("NextToken", () => {
         let input = `## Something\n\n[link to document](./README.md)`;
         let testdata = [
