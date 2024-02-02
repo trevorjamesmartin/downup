@@ -10,12 +10,12 @@ class Parser {
         this.nextToken(); // peekToken
         this.prefixParseFns = {};
 
-        this.registerPrefix('[', this.parseLinkToResource)
+        this.registerPrefix('[', this.parseLinkToResource); // <a href...
 
-        this.registerPrefix('HEADING', this.parseHeader)
+        this.registerPrefix('HEADING', this.parseHeader);   // <h{0-5}>...
 
+        this.registerPrefix('!', this.parseBanger);         // <img...
     }
-
 }
 
 Parser.prototype.registerPrefix = function(tokenLiteral, f) {
@@ -104,6 +104,39 @@ Parser.prototype.parseLinkToResource = function() {
     }
 
     return `<a href="${url}">${content}</a>`;
+}
+
+Parser.prototype.parseBanger = function() {
+    if (this.peekToken.Literal !== '[') {
+        // not followed by link
+        return this.currentToken.Literal
+    }
+
+    this.nextToken();
+
+    let description = "";
+
+    if (this.peekToken.Literal !== "]"){
+        description = this.parseBetween("[", "]");
+    } else {
+        this.nextToken();
+        this.nextToken();
+    }
+
+    if (this.currentToken.Literal !== "(") {
+        // not a link, re-wrap
+        return `[${description}]`;
+    }
+        
+    let url = this.parseBetween("(", ")");
+
+    if (url[0] === "(") {
+        // missing closing paren
+        return `[${description}]${url}`;
+    }
+
+    return `<img src="${url}" alt="${description || ''}"></img>`;
+
 }
 
 Parser.prototype.parseHeader = function () {

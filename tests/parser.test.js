@@ -55,5 +55,40 @@ describe("Parser test", () => {
         
     });
 
+    test("parse image tag", () => {
+
+        let sample = [
+            {
+                input: "![](./image.jpg)",
+                expectedOutput: `<img src="./image.jpg" alt=""></img>`
+            },
+            {
+                input: "![happy trees](./bobross.png)",
+                expectedOutput: `<img src="./bobross.png" alt="happy trees"></img>`
+            },
+            {
+                input: "[picture of happy trees](./bobross.png)",
+                expectedOutput: `<a href="./bobross.png">picture of happy trees</a>`
+            },
+            {
+                input: `## another test\n\nlets try displaying an image\n![](./image.jpg)\n\n#\n\n### this one has an alt tag\n\n[picture of happy trees](./bobross.jpg)\n#\n\nthat was just a link, this one should be an image\n\n![picture of happy trees](./bobross.jpg)`,
+
+                expectedOutput: `<h2>another test</h2>\n\nlets try displaying an image\n<img src="./image.jpg" alt=""></img>\n<hr>\n\n<h3>this one has an alt tag</h3>\n\n<a href="./bobross.jpg">picture of happy trees</a><hr>\n\nthat was just a link, this one should be an image\n\n<img src="./bobross.jpg" alt="picture of happy trees"></img>`
+            },
+        ];
+
+        let lex, p, output;
+
+        for (let {input, expectedOutput} of sample) {
+            lex = new Lexer(input);
+            p = new Parser(lex);
+            output = p.Parse();
+            expect(output).toBe(expectedOutput);
+        }
+
+
+    });
+
 });
+
 

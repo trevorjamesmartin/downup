@@ -111,7 +111,7 @@ Lexer.prototype.peekChar = function() {
  **/
 Lexer.prototype.NextToken = function() {
     let token, literal;
-    let delimit = [' ', '\n', '\r', '\t', '[', ']', '(', ')', '{', '}', 0];
+    let delimit = ['!', ' ', '\n', '\r', '\t', '[', ']', '(', ')', '{', '}', 0];
 
     switch (this.ch) {
         case ' ':
