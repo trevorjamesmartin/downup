@@ -15,6 +15,8 @@ class Parser {
         this.registerPrefix('HEADING', this.parseHeader);   // <h{0-5}>...
 
         this.registerPrefix('!', this.parseBanger);         // <img...
+    
+        // TODO: <table...
     }
 }
 
@@ -134,9 +136,13 @@ Parser.prototype.parseBanger = function() {
         // missing closing paren
         return `[${description}]${url}`;
     }
+    let img = `<img src="${url}" alt="${description || ''}"></img>`;
 
-    return `<img src="${url}" alt="${description || ''}"></img>`;
+    if (this.currentToken.Type === "EOL") {
+        img += this.currentToken.Literal;
+    }
 
+    return img
 }
 
 Parser.prototype.parseHeader = function () {

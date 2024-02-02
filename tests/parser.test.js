@@ -73,7 +73,7 @@ describe("Parser test", () => {
             {
                 input: `## another test\n\nlets try displaying an image\n![](./image.jpg)\n\n#\n\n### this one has an alt tag\n\n[picture of happy trees](./bobross.jpg)\n#\n\nthat was just a link, this one should be an image\n\n![picture of happy trees](./bobross.jpg)`,
 
-                expectedOutput: `<h2>another test</h2>\n\nlets try displaying an image\n<img src="./image.jpg" alt=""></img>\n<hr>\n\n<h3>this one has an alt tag</h3>\n\n<a href="./bobross.jpg">picture of happy trees</a><hr>\n\nthat was just a link, this one should be an image\n\n<img src="./bobross.jpg" alt="picture of happy trees"></img>`
+                expectedOutput: `<h2>another test</h2>\n\nlets try displaying an image\n<img src="./image.jpg" alt=""></img>\n\n<hr>\n\n<h3>this one has an alt tag</h3>\n\n<a href="./bobross.jpg">picture of happy trees</a><hr>\n\nthat was just a link, this one should be an image\n\n<img src="./bobross.jpg" alt="picture of happy trees"></img>`
             },
         ];
 
