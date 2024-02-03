@@ -89,6 +89,34 @@ describe("Parser test", () => {
 
     });
 
+    test("parse example", () => {
+        let input = `# H1\n## H2\n### H3\n#### H4\n##### H5\n###### H6\n\nAlternatively, for H1 and H2, an underline-ish style:\n\nAlt-H1\n======\n\nAlt-H2\n------\n\n`;
+
+        let expectedOutput= '<h1>H1</h1>\n' +
+                            '<h2>H2</h2>\n' +
+                            '<h3>H3</h3>\n' +
+                            '<h4>H4</h4>\n' +
+                            '<h5>H5</h5>\n' +
+                            '<h6>H6</h6>\n' +
+                            '\n' +
+                            'Alternatively, for H1 and H2, an underline-ish style:\n' +
+                            '\n' +
+                            'Alt-H1\n' + // TODO
+                            '======\n' +
+                            '\n' +
+                            'Alt-H2\n' + // TODO
+                            '------\n' +
+                            '\n';
+        
+        let lex = new Lexer(input);
+        let p = new Parser(lex);
+
+        expect(p.Parse()).toBe(expectedOutput);
+
+        
+
+    });
+
 });
 
 
