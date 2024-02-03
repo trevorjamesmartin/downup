@@ -1,3 +1,4 @@
+const tkn = require('./token.js');
 
 class Parser {
 
@@ -8,13 +9,31 @@ class Parser {
         this.peekToken = undefined;
         this.nextToken(); // currentToken
         this.nextToken(); // peekToken
+        
         this.prefixParseFns = {};
 
-        this.registerPrefix('[', this.parseLinkToResource); // <a href...
+        //  override to customize your markup element(s)
+        this.tagFns = {
+            h1: ({text}) => `<h1>${text}</h1>\n`,
+            h2: ({text}) => `<h2>${text}</h2>\n`,
+            h3: ({text}) => `<h3>${text}</h3>\n`,
+            h4: ({text}) => `<h4>${text}</h4>\n`,
+            h5: ({text}) => `<h5>${text}</h5>\n`,
+            h6: ({text}) => `<h6>${text}</h6>\n`,
+            hr: () => '<hr>',
+        }; 
+        
+        //  alternatively, you can register a tag for output
+        this.registerTag("img", function({src, alt}) {
+            return `<img src="${src}" alt="${alt || ''}"></img>`
+        });
 
-        this.registerPrefix('HEADING', this.parseHeader);   // <h{0-5}>...
+        // readers
+        this.registerPrefix(tkn.LBRACE, this.parseLinkToResource); // <a href...
 
-        this.registerPrefix('!', this.parseBanger);         // <img...
+        this.registerPrefix(tkn.HEADING, this.parseHeader);   // <h{0-5}>...
+
+        this.registerPrefix(tkn.BANG, this.parseBanger);         // <img...
 
         // TODO: unordered lists can MINUS PLUS or ASTERISK
         //
@@ -38,10 +57,21 @@ Parser.prototype.registerPrefix = function(tokenLiteral, f) {
     this.prefixParseFns[tokenLiteral] = f.bind(this);
 }
 
+/*
+ * Register your flavor of markup 
+ *
+ * @param {string} tagname  - "h1", "h2", "hr"...
+ * @param {function} f      - (object) => string
+ *
+ */
+Parser.prototype.registerTag = function(tagname, f) {
+    this.tagFns[tagname] = f;
+}
+
 Parser.prototype.Parse = function() {
     let f;
     let text = '';
-    while (this.currentToken.Type != 'EOF') {
+    while (this.currentToken.Type != tkn.EOF) {
         f = this.prefixParseFns[this.currentToken.Type];
         
         if (typeof f === 'function') {
@@ -64,10 +94,11 @@ Parser.prototype.parseBetween = function(startChar, endChar) {
     if (this.currentToken.Literal === startChar) {
         this.nextToken();
     } else {
-        return new Error(`should be called from the startChar: "${startChar}". caller was "${this.currentToken.Literal}"`);
+        this.errors.push(`[parseBetween] expected current token to be '${startChar}', got '${JSON.stringify(this.currentToken)}'`);
+        return
     }
 
-    let content = this.filter((token) => token.Literal != endChar);
+    let content = this.filter((token) => token.Literal != endChar) || '';
 
     this.nextToken();
 
@@ -88,9 +119,9 @@ Parser.prototype.filter = function(f) {
 
     let literal = '';
 
-    for (let ok = (this.peekToken.Type != 'EOF'); ok && f(this.peekToken); this.nextToken()) {
+    for (let ok = (this.peekToken.Type != tkn.EOF); ok && f(this.peekToken); this.nextToken()) {
         literal += this.currentToken.Literal;
-        ok = (this.peekToken.Type != 'EOF');
+        ok = (this.peekToken.Type != tkn.EOF);
     }
 
     if (f(this.currentToken)) {
@@ -102,28 +133,32 @@ Parser.prototype.filter = function(f) {
 
 
 Parser.prototype.parseLinkToResource = function() { 
-    let content = this.parseBetween("[", "]");
+    let text = this.parseBetween(tkn.LBRACE, tkn.RBRACE);
 
-    if (content[0] === "[") {
-        return content;    
+    if (text[0] === tkn.LBRACE) {
+        return text;    
     }
 
-    if (this.currentToken.Literal !== "(") {
+    if (this.currentToken.Literal !== tkn.LPAREN) {
         // not a link, re-wrap
-        return `[${content}]`;
+        return `[${text}]`;
     }
         
-    let url = this.parseBetween("(", ")");
+    let href = this.parseBetween(tkn.LPAREN, tkn.RPAREN);
 
-    if (url[0] === "(") {
-        return content + url;
+    if (href[0] === tkn.LPAREN) {
+        return text + href;
     }
 
-    return `<a href="${url}">${content}</a>`;
+    if (typeof this.tagFns["a"] === 'function') {
+        return this.tagFns["a"]({href, text});
+    }
+
+    return `<a href="${href}">${text}</a>`;
 }
 
 Parser.prototype.parseBanger = function() {
-    if (this.peekToken.Literal !== '[') {
+   if (this.peekToken.Literal !== tkn.LBRACE) {
         // not followed by link
         return this.currentToken.Literal
     }
@@ -132,27 +167,34 @@ Parser.prototype.parseBanger = function() {
 
     let description = "";
 
-    if (this.peekToken.Literal !== "]"){
-        description = this.parseBetween("[", "]");
+    if (this.peekToken.Literal !== tkn.RBRACE){
+        description = this.parseBetween(tkn.LBRACE, tkn.RBRACE);
     } else {
         this.nextToken();
         this.nextToken();
     }
 
-    if (this.currentToken.Literal !== "(") {
+    if (this.currentToken.Literal !== tkn.LPAREN) {
         // not a link, re-wrap
         return `[${description}]`;
     }
         
-    let url = this.parseBetween("(", ")");
+    let url = this.parseBetween(tkn.LPAREN, tkn.RPAREN);
 
-    if (url[0] === "(") {
+    if (url[0] === tkn.LPAREN) {
         // missing closing paren
-        return `[${description}]${url}`;
+        return `[${description}](${url}`;
     }
-    let img = `<img src="${url}" alt="${description || ''}"></img>`;
+    let img = '';
 
-    if (this.currentToken.Type === "EOL") {
+    if (typeof this.tagFns['img'] === 'function') {
+        img = this.tagFns['img']({ src: url, alt: description });
+    } else {
+        // default to returning the text as-is
+        img = `[${description}](${url})`;
+    }
+
+    if (this.currentToken.Type === tkn.EOL) {
         img += this.currentToken.Literal;
     }
 
@@ -164,39 +206,42 @@ Parser.prototype.parseHeader = function () {
     
     let num = t.Literal.length;
 
-    if (num === 1 && this.peekToken.Type === 'EOL') {
+    if (num === 1 && this.peekToken.Type === tkn.EOL) {
         this.nextToken();
         this.nextToken();
-        return "<hr>\n\n";
+        return this.tagFns['hr']() + '\n\n';
     }
     
-    let el = '';
+    let tag = '';
     
     if (num > 0 && num < 8) {
         // name the element
-        el = `h${num}`;
+        tag = `h${num}`;
     } else {
         return this.currentToken.Literal;
     }
     
     // expect space
 
-    if (this.peekToken.Type != 'WSPACE') {
+    if (this.peekToken.Type != tkn.WSPACE) {
         return this.currentToken.Literal;
     }
 
     this.nextToken();
     this.nextToken();
 
-    let innerText = this.filter((toke) => toke.Type != 'EOL');
-    
-    let result = `<${el}>${innerText}</${el}>\n`;
-    
+    let text = this.filter((toke) => toke.Type != tkn.EOL);
+
     this.nextToken();
 
-    return result;
+    if (typeof this.tagFns[tag] === 'function') {
+        // return your flavor
+        return this.tagFns[tag]({text});
+    }
+
+    // return vanilla HTML
+    return `<${tag}>${text}</${tag}>\n`;
 }
 
-//export { Parser }
 module.exports = Parser;
 
