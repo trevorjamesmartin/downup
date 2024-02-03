@@ -1,68 +1,4 @@
-/**
- *
- * Token
- *
- */
-class Token {
-    /**
-     * @constructor
-     * @param {string} tokenType
-     * @param {string} tokenLiteral
-     */
-    constructor(tokenType, tokenLiteral) {
-        this.Type = tokenType;
-        this.Literal = tokenLiteral;
-    }
-}
-
-const CONTENT       = "CONTENT";
-const WSPACE        = "WSPACE";
-const HEADING       = "HEADING";
-const EOF           = "EOF";
-const EOL           = "EOL";
-
-const TABS          = "\t";
-const NEW_LINE      = "\n";
-const CR            = "\r";
-
-const EQUALS        = "=";
-const PLUS          = "+";
-const MINUS         = "-";
-const CRASH         = "#";
-const POINT         = ".";
-const BANG          = "!";
-const ASTERISK      = "*";
-const SLASH         = "/";
-const LT            = "<";
-const GT            = ">";
-const COMMA         = ",";
-const SEMICOLON     = ";";
-const LPAREN        = "(";
-const RPAREN        = ")";
-const LBRACE        = "[";
-const RBRACE        = "]";
-const LBRACKET      = "{";
-const RBRACKET      = "}";
-const COLON         = ":";
-
-var keywords = {
-    '#': CRASH,
-    '!': BANG,
-    '[': LBRACE,
-    ']': RBRACE,
-    '(': LPAREN,
-    ')': RPAREN,
-    ' ': WSPACE,
-};
-
-function Lookup(text) {
-    if (keywords[text]) {
-        return keywords[text]
-    }
-
-    return CONTENT;
-}
-
+const { Token, Lookup, ...tkn } = require('./token.js');
 
 /**
  *  Lexer
@@ -83,7 +19,7 @@ class Lexer {
 }
 
 /**
- * advance positions and update Lexer.ch
+ * advance positions and update Lexer.ch 
  */
 Lexer.prototype.readChar = function() {
     if (this.readPosition >= this.input.length) {
@@ -116,34 +52,34 @@ Lexer.prototype.NextToken = function() {
     switch (this.ch) {
         case ' ':
             literal = this.filter((ch) => ch === ' ');
-            token = new Token(WSPACE, literal);
+            token = new Token(tkn.WSPACE, literal);
             break;
 
         case '#':
             literal = this.filter((ch) => ch === '#');
-            token = new Token(HEADING, literal);
+            token = new Token(tkn.HEADING, literal);
             break;
 
         case '\t':
             literal = this.filter((ch) => ch === '\t');
-            token = new Token(TABS, literal);
+            token = new Token(tkn.TABS, literal);
             break;
 
         case '\n':
         case '\r':
             literal = this.ch;
-            token = new Token(EOL, literal);
+            token = new Token(tkn.EOL, literal);
             break;
 
         case 0:
             literal = "";
-            token = new Token(EOF, literal);
+            token = new Token(tkn.EOF, literal);
             break;
 
         default:
             literal = this.filter((ch) => !delimit.includes(ch));
             if (literal) {
-                token = new Token(CONTENT, literal);
+                token = new Token(tkn.CONTENT, literal);
             } else {
                 token = new Token(Lookup(this.ch), this.ch);
             }
