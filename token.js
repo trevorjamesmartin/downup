@@ -53,6 +53,9 @@ var keywords = {
     '(': LPAREN,
     ')': RPAREN,
     ' ': WSPACE,
+    '\r': EOL,
+    '\n': EOL,
+    '\t': TABS,
 };
 
 function Lookup(text) {
@@ -65,8 +68,11 @@ function Lookup(text) {
 
 
 module.exports = {
+
     Token,
     Lookup,
+
+    // CONSTANTS
 
     CONTENT,
     WSPACE,
@@ -74,4 +80,27 @@ module.exports = {
     EOF,
     HEADING,
 
+    TABS,
+    NEW_LINE,
+    CR,
+
+    EQUALS,
+    PLUS,
+    MINUS,
+    CRASH,
+    POINT,
+    BANG,
+    ASTERISK,
+    SLASH,
+    LT,
+    GT,
+    COMMA,
+    SEMICOLON,
+    LPAREN,
+    RPAREN,
+    LBRACE,
+    RBRACE,
+    LBRACKET,
+    RBRACKET,
+    COLON,
 }
