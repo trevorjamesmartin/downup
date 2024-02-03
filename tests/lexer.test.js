@@ -1,5 +1,6 @@
-import("jest");
-const { Lexer } = await import('../lexer.js');
+require("jest");
+
+const Lexer = require('../lexer.js');
 
 describe("Lexer test", () => {
     

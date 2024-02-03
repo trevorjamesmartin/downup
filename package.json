@@ -9,7 +9,7 @@
     "npm": ">= 10.2.4"
   },
   "scripts": {
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
+    "test": "jest"
   },
   "keywords": [
     "markdown"
