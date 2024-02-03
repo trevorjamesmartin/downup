@@ -183,5 +183,6 @@ Parser.prototype.parseHeader = function () {
     return result;
 }
 
-export { Parser }
+//export { Parser }
+module.exports = Parser;
 

@@ -1,9 +1,9 @@
 {
   "name": "downup",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "markdown to markup",
   "main": "index.js",
-  "type": "module",
+  "type": "commonjs",
   "engines": {
     "node": ">=20.11.0",
     "npm": ">= 10.2.4"

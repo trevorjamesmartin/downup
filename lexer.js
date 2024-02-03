@@ -207,5 +207,5 @@ Lexer.prototype.Clone = function() {
     return Lexer.hydrate(this.toString());
 }
 
-export { Lexer };
+module.exports = Lexer;
 

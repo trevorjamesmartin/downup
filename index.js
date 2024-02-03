@@ -1,12 +1,10 @@
-const {Lexer} = await import("./lexer.js");
-const {Parser} = await import("./parser.js");
+const Lexer = require("./lexer.js");
+const Parser = require("./parser.js");
     
-function MarkdownUp(markdown) {
+module.exports = function(markdown) {
     const down = markdown;
     const up = new Parser(new Lexer(markdown)).Parse();
     return {down, up}
 }
-
-export {MarkdownUp}
 
 
