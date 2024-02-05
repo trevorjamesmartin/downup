@@ -21,6 +21,8 @@ const HEADING       = "HEADING";
 const EOF           = "EOF";
 const EOL           = "EOL";
 
+const NUMBER        = "NUMBER";
+
 const TABS          = "\t";
 const NEW_LINE      = "\n";
 const CR            = "\r";
@@ -79,6 +81,8 @@ module.exports = {
     EOL,
     EOF,
     HEADING,
+
+    NUMBER,
 
     TABS,
     NEW_LINE,

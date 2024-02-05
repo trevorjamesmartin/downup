@@ -5,7 +5,7 @@ const Lexer = require('../lexer.js');
 describe("Lexer test", () => {
     
     test("NextToken", () => {
-        let input = `## Something\n\n[link to document](./README.md)`;
+        let input = `## Something\n\n[link to document](./README.md)\n123\n456\n789\n1. start of ordered list\n2. next element\n3. uno mas`;
         let testdata = [
             { Type: 'HEADING', Literal: '##' },
             { Type: 'WSPACE', Literal: ' ' },
@@ -22,6 +22,34 @@ describe("Lexer test", () => {
             { Type: '(', Literal: '(' },
             { Type: 'CONTENT', Literal: './README.md' },
             { Type: ')', Literal: ')' },
+            { Type: 'EOL', Literal: '\n' },
+            { Type: 'NUMBER', Literal: '123'},
+            { Type: 'EOL', Literal: '\n' },
+            { Type: 'NUMBER', Literal: '456'},
+            { Type: 'EOL', Literal: '\n' },
+            { Type: 'NUMBER', Literal: '789'},
+            { Type: 'EOL', Literal: '\n' },
+            { Type: 'NUMBER', Literal: '1.'},
+            { Type: 'WSPACE', Literal: ' ' },
+            { Type: 'CONTENT', Literal: 'start' },
+            { Type: 'WSPACE', Literal: ' ' },
+            { Type: 'CONTENT', Literal: 'of' },
+            { Type: 'WSPACE', Literal: ' ' },
+            { Type: 'CONTENT', Literal: 'ordered' },
+            { Type: 'WSPACE', Literal: ' ' },
+            { Type: 'CONTENT', Literal: 'list' },
+            { Type: 'EOL', Literal: '\n' },
+            { Type: 'NUMBER', Literal: '2.'},
+            { Type: 'WSPACE', Literal: ' ' },
+            { Type: 'CONTENT', Literal: 'next' },
+            { Type: 'WSPACE', Literal: ' ' },
+            { Type: 'CONTENT', Literal: 'element' },
+            { Type: 'EOL', Literal: '\n' },
+            { Type: 'NUMBER', Literal: '3.'},
+            { Type: 'WSPACE', Literal: ' ' },
+            { Type: 'CONTENT', Literal: 'uno' },
+            { Type: 'WSPACE', Literal: ' ' },
+            { Type: 'CONTENT', Literal: 'mas' },
             { Type: 'EOF', Literal: '' },
         ];
 

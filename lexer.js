@@ -31,6 +31,41 @@ Lexer.prototype.readChar = function() {
     this.readPosition++;
 }
 
+const isDigit = (stringChar) => {
+    let result;
+    switch (stringChar) {
+        case '0':
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9':
+            result = true;
+            break;
+        default:
+            result = false;
+            break;
+    }
+    
+    return result;
+}
+
+Lexer.prototype.readNumber = function() {
+    let pos = this.position;
+    
+    while (isDigit(this.peekChar()) || this.peekChar() === '.') {
+        this.readChar();
+    }
+
+    return this.input.substring(pos, this.position+1);
+}
+
+
+
 /**
  * take a peek at the next character
  * @returns {string}
@@ -47,7 +82,11 @@ Lexer.prototype.peekChar = function() {
  **/
 Lexer.prototype.NextToken = function() {
     let token, literal;
-    let delimit = ['!', ' ', '\n', '\r', '\t', '[', ']', '(', ')', '{', '}', 0];
+    let delimit = [
+        '!', ' ', '\n', '\r', '\t', 
+        '[', ']', '(', ')', '{', '}', 
+        '"', "'", "`",
+        0];
 
     switch (this.ch) {
         case ' ':
@@ -76,7 +115,22 @@ Lexer.prototype.NextToken = function() {
             token = new Token(tkn.EOF, literal);
             break;
 
+        case '0':
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9':
+            literal = this.readNumber();
+            token = new Token(tkn.NUMBER, literal);
+            break;
+
         default:
+            // read until next delimiter                                     
             literal = this.filter((ch) => !delimit.includes(ch));
             if (literal) {
                 token = new Token(tkn.CONTENT, literal);
