@@ -38,7 +38,7 @@ class Parser {
         // TODO: unordered lists can MINUS PLUS or ASTERISK
         //
         
-        // TODO: ordered lists start with any number (yes, any number)
+        // TODO: ordered lists start with any number (yes, any number) followed by a period
         //
         
         // TODO: Emphasis, aka italics, with *asterisks* or _underscores_.
@@ -176,14 +176,14 @@ Parser.prototype.parseBanger = function() {
 
     if (this.currentToken.Literal !== tkn.LPAREN) {
         // not a link, re-wrap
-        return `[${description}]`;
+        return `![${description}]`;
     }
         
     let url = this.parseBetween(tkn.LPAREN, tkn.RPAREN);
 
     if (url[0] === tkn.LPAREN) {
         // missing closing paren
-        return `[${description}](${url}`;
+        return `![${description}](${url}`;
     }
     let img = '';
 
@@ -191,7 +191,7 @@ Parser.prototype.parseBanger = function() {
         img = this.tagFns['img']({ src: url, alt: description });
     } else {
         // default to returning the text as-is
-        img = `[${description}](${url})`;
+        img = `![${description}](${url})`;
     }
 
     if (this.currentToken.Type === tkn.EOL) {
