@@ -5,6 +5,16 @@ const { Token, Lookup, ...tkn } = require('../token.js');
 
 describe("Token test", () => {
 
+    test("token structure", () => {
+
+        let t = new Token(tkn.CONTENT, "something");
+        let keys = Object.keys(t);
+        expect(keys.includes('Type')).toBe(true);
+        expect(keys.includes('Literal')).toBe(true);
+        expect(t.Type).toBe(tkn.CONTENT);
+        expect(t.Literal).toBe("something");
+    });
+
     test("constants", () => {
         
         expect(tkn.CR).toBe('\r');
@@ -27,16 +37,5 @@ describe("Token test", () => {
         expect(Lookup('\r')).toBe(tkn.EOL);
 
     });
-
-    test("structure", () => {
-
-        let t = new Token(tkn.CONTENT, "something");
-
-        expect(t.Type).toBe(tkn.CONTENT);
-
-        expect(t.Literal).toBe("something");
-
-    })
-
 
 });
