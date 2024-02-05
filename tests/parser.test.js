@@ -89,6 +89,22 @@ describe("Parser test", () => {
 
     });
 
+    test("parse ordered list", () => {
+        let sample = [
+            {
+                input: '1. something\n2. something else\n3. uno mas',
+                expectedOutput: '<ol><li>something</li>\n<li>something else</li>\n<li>uno mas</li></ol>'
+            }
+        ];
+
+        for (let {input, expectedOutput} of sample) {
+            lex = new Lexer(input);
+            p = new Parser(lex);
+            output = p.Parse();
+            expect(output).toBe(expectedOutput);
+        }
+    });
+
     test("parse example", () => {
         let input = `# H1\n## H2\n### H3\n#### H4\n##### H5\n###### H6\n\nAlternatively, for H1 and H2, an underline-ish style:\n\nAlt-H1\n======\n\nAlt-H2\n------\n\n`;
 
@@ -112,8 +128,6 @@ describe("Parser test", () => {
         let p = new Parser(lex);
 
         expect(p.Parse()).toBe(expectedOutput);
-
-        
 
     });
 

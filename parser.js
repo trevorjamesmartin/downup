@@ -40,6 +40,7 @@ class Parser {
         
         // TODO: ordered lists start with any number (yes, any number) followed by a period
         //
+        this.registerPrefix(tkn.NUMBER, this.parseNumber);
         
         // TODO: Emphasis, aka italics, with *asterisks* or _underscores_.
 
@@ -241,6 +242,49 @@ Parser.prototype.parseHeader = function () {
 
     // return vanilla HTML
     return `<${tag}>${text}</${tag}>\n`;
+}
+
+
+Parser.prototype.parseNumber = function() {
+    let t = this.currentToken;
+    
+    if (t.Literal.endsWith('.') && 
+        this.peekToken.Type === tkn.WSPACE) {
+        // ordered list ?
+        return this.parseOrderedList();
+    }
+
+    return t.Literal;
+}
+
+Parser.prototype.parseOrderedList = function() {
+    let idx = this.currentToken.Literal; 
+    let wspace = this.peekToken.Type;
+    
+    let items = [];
+
+    while (idx.endsWith('.') && wspace === tkn.WSPACE) {
+        this.nextToken(); // 1.
+        this.nextToken(); // ' '
+
+        items.push(this.filter((toke) => toke.Type != tkn.EOL)); // list item
+        
+        this.nextToken(); // EOL
+        this.nextToken(); // 2.
+
+        idx = this.currentToken.Literal; 
+        wspace = this.peekToken.Type;
+    }
+
+    // number wspace content (eol || eof)
+    // 1. content\n
+    // 2. content\n
+
+    if (items.length > 0) {
+        return `<ol>${items.map((text) => `<li>${text}</li>`).join('\n')}</ol>`;
+    }
+    
+    return t.Literal;
 }
 
 module.exports = Parser;
