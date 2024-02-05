@@ -9,7 +9,7 @@
     "npm": ">= 10.2.4"
   },
   "scripts": {
-    "test": "jest"
+    "test": "jest --verbose"
   },
   "keywords": [
     "markdown"
