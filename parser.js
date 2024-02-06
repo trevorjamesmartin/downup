@@ -163,35 +163,24 @@ Parser.prototype.parseLinkToResource = function() {
 }
 
 Parser.prototype.parseMinus = function() {
-    console.log(this.currentToken);
-    console.log(this.peekToken);
     if (this.currentToken.Literal === tkn.MINUS &&
         this.peekToken.Type === tkn.WSPACE) {
-        console.log('->');
         return this.parseUnorderedList();
     }
     return this.currentToken.Literal;
 }
 
 Parser.prototype.parsePlus = function() {
-    console.log('parsePlus');
-    console.log(this.currentToken);
-    console.log(this.peekToken);
     if (this.currentToken.Literal === tkn.PLUS &&
         this.peekToken.Type === tkn.WSPACE) {
-        console.log('->');
         return this.parseUnorderedList();
     }
     return this.currentToken.Literal;
 }
 
 Parser.prototype.parseAsterisk = function() {
-    console.log('parseAsterisk');
-    console.log(this.currentToken);
-    console.log(this.peekToken);
     if (this.currentToken.Literal === tkn.ASTERISK &&
         this.peekToken.Type === tkn.WSPACE) {
-        console.log('->');
         return this.parseUnorderedList();
     }
     return this.currentToken.Literal;
