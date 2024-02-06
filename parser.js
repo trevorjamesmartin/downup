@@ -36,7 +36,11 @@ class Parser {
         this.registerPrefix(tkn.BANG, this.parseBanger);         // <img...
 
         // TODO: unordered lists can MINUS PLUS or ASTERISK
-        //
+        this.registerPrefix(tkn.MINUS, this.parseMinus);
+        this.registerPrefix(tkn.PLUS, this.parsePlus);
+        this.registerPrefix(tkn.ASTERISK, this.parseAsterisk);
+
+
         
         // TODO: ordered lists start with any number (yes, any number) followed by a period
         //
@@ -158,8 +162,45 @@ Parser.prototype.parseLinkToResource = function() {
     return `<a href="${href}">${text}</a>`;
 }
 
+Parser.prototype.parseMinus = function() {
+    console.log(this.currentToken);
+    console.log(this.peekToken);
+    if (this.currentToken.Literal === tkn.MINUS &&
+        this.peekToken.Type === tkn.WSPACE) {
+        console.log('->');
+        return this.parseUnorderedList();
+    }
+    return this.currentToken.Literal;
+}
+
+Parser.prototype.parsePlus = function() {
+    console.log('parsePlus');
+    console.log(this.currentToken);
+    console.log(this.peekToken);
+    if (this.currentToken.Literal === tkn.PLUS &&
+        this.peekToken.Type === tkn.WSPACE) {
+        console.log('->');
+        return this.parseUnorderedList();
+    }
+    return this.currentToken.Literal;
+}
+
+Parser.prototype.parseAsterisk = function() {
+    console.log('parseAsterisk');
+    console.log(this.currentToken);
+    console.log(this.peekToken);
+    if (this.currentToken.Literal === tkn.ASTERISK &&
+        this.peekToken.Type === tkn.WSPACE) {
+        console.log('->');
+        return this.parseUnorderedList();
+    }
+    return this.currentToken.Literal;
+}
+
+
+
 Parser.prototype.parseBanger = function() {
-   if (this.peekToken.Literal !== tkn.LBRACE) {
+    if (this.peekToken.Literal !== tkn.LBRACE) {
         // not followed by link
         return this.currentToken.Literal
     }
@@ -255,6 +296,30 @@ Parser.prototype.parseNumber = function() {
     }
 
     return t.Literal;
+}
+
+Parser.prototype.parseUnorderedList = function() {
+    console.log('parseUnorderedList');
+    let b = this.currentToken.Literal;
+    let wspace = this.peekToken.Type;
+    let bullets = [tkn.MINUS, tkn.PLUS, tkn.ASTERISK];
+    let items =[];
+    while (wspace === tkn.WSPACE && bullets.includes(b)) {
+        this.nextToken(); // -
+        this.nextToken(); // ' '
+        items.push(this.filter((toke) => toke.Type != tkn.EOL)); // item
+        this.nextToken() // EOL
+        this.nextToken() // -
+        b = this.currentToken.Literal;
+        wspace = this.peekToken.Type;
+    }
+    if (items.length > 0) {
+        return `<ul>${items.map((text) => `<li>${text}</li>`).join('\n')}</ul>`;
+    }
+    
+    return t.Literal;
+
+    
 }
 
 Parser.prototype.parseOrderedList = function() {

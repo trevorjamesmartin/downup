@@ -94,7 +94,10 @@ describe("Parser test", () => {
             {
                 input: '1. something\n2. something else\n3. uno mas',
                 expectedOutput: '<ol><li>something</li>\n<li>something else</li>\n<li>uno mas</li></ol>'
-            }
+            },           {
+                input: '1. something\n42. something else\n34. uno mas',
+                expectedOutput: '<ol><li>something</li>\n<li>something else</li>\n<li>uno mas</li></ol>'
+            },
         ];
 
         for (let {input, expectedOutput} of sample) {
@@ -103,6 +106,35 @@ describe("Parser test", () => {
             output = p.Parse();
             expect(output).toBe(expectedOutput);
         }
+    });
+
+    test("parse unordered list", () => {
+        let sample = [
+            {
+                input: "- item1\n- item2\n- item3",
+                expectedOutput: '<ul><li>item1</li>\n<li>item2</li>\n<li>item3</li></ul>'
+            },
+            {
+                input: "+ item1\n+ item2\n+ item3",
+                expectedOutput: '<ul><li>item1</li>\n<li>item2</li>\n<li>item3</li></ul>'
+            },
+            {
+                input: "* item1\n* item2\n* item3",
+                expectedOutput: '<ul><li>item1</li>\n<li>item2</li>\n<li>item3</li></ul>'
+            },
+            {
+                input: "+ item1\n- item2\n* item3",
+                expectedOutput: '<ul><li>item1</li>\n<li>item2</li>\n<li>item3</li></ul>'
+            },
+        ];
+
+        for (let {input, expectedOutput} of sample) {
+            lex = new Lexer(input);
+            p = new Parser(lex);
+            output = p.Parse();
+            expect(output).toBe(expectedOutput);
+        }
+
     });
 
     test("parse example", () => {

@@ -129,6 +129,21 @@ Lexer.prototype.NextToken = function() {
             token = new Token(tkn.NUMBER, literal);
             break;
 
+        case '-':
+            literal = this.filter((ch) => ch === '-');
+            token = new Token(tkn.MINUS, literal);
+            break;
+
+        case '+':
+            literal = this.filter((ch) => ch === '+');
+            token = new Token(tkn.PLUS, literal);
+            break;
+
+        case '*':
+            literal = this.filter((ch) => ch === '*');
+            token = new Token(tkn.ASTERISK, literal);
+            break;
+
         default:
             // read until next delimiter                                     
             literal = this.filter((ch) => !delimit.includes(ch));
