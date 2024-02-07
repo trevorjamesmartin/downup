@@ -23,7 +23,6 @@
         function debounce(f, timeout=420) {
             let timer;
             return (...params) => {
-                console.log(params);
                 clearTimeout(timer);
                 timer = setTimeout(() => f.apply(this, params), timeout);
             };
