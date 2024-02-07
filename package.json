@@ -9,7 +9,9 @@
     "npm": ">= 10.2.4"
   },
   "scripts": {
-    "test": "jest --verbose"
+    "test": "jest --verbose",
+    "build": "esbuild index.js --bundle --minify --format=esm --outfile=vendor.js",
+    "start": "npm run build && npx serve ."
   },
   "keywords": [
     "markdown"
@@ -17,6 +19,8 @@
   "author": "trevor.j.martin@gmail.com",
   "license": "ISC",
   "devDependencies": {
-    "jest": "^29.7.0"
+    "esbuild": "0.20.0",
+    "jest": "^29.7.0",
+    "serve": "^14.2.1"
   }
 }

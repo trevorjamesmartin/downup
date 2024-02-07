@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>downup</title>
+</head>
+<body>
+    <script type="module">
+        import downup from "/vendor.js";
+        const {token, Lexer, Parser} = downup;
+
+        function bam() {
+            let input = document.querySelector('#markdown-text').value;
+            let output = document.querySelector('#markup-text');
+            let lex = new Lexer(input);
+            let p = new Parser(lex);
+            let value = p.Parse();
+            output.innerHTML = value;
+        }
+
+        globalThis.downup = {token, Lexer, Parser, bam};
+    </script>
+    
+    <button id="downup-btn" onclick="downup.bam()">translate</button>
+
+    <div id="downup-wrapper">
+        <textarea id="markdown-text"></textarea>
+        <div id="markup-text"></div>
+    </div>
+    
+    <style>
+        * { color-scheme: dark; }
+
+        #downup-wrapper {
+            display: flex;
+        }
+
+        #markdown-text {
+            margin: 1rem;
+            min-width: 40%;
+            min-height: 50vh;
+            font-size: xx-large;
+        }
+
+        #markup-text {
+            font-size: x-larger;
+        }
+
+    </style>
+</body>
+</html>
