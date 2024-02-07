@@ -7,25 +7,39 @@
 </head>
 <body>
     <script type="module">
+
         import downup from "/vendor.js";
-        const {token, Lexer, Parser} = downup;
+        
+        const {Lexer, Parser} = downup;
 
         function bam() {
-            let input = document.querySelector('#markdown-text').value;
-            let output = document.querySelector('#markup-text');
-            let lex = new Lexer(input);
-            let p = new Parser(lex);
-            let value = p.Parse();
-            output.innerHTML = value;
+            
+            const input = document.querySelector('#markdown-text').value;
+            const output = document.querySelector('#markup-text');
+
+            output.innerHTML = (new Parser(new Lexer(input))).Parse();
         }
 
-        globalThis.downup = {token, Lexer, Parser, bam};
+        function debounce(f, timeout=420) {
+            let timer;
+            return (...params) => {
+                console.log(params);
+                clearTimeout(timer);
+                timer = setTimeout(() => f.apply(this, params), timeout);
+            };
+        }
+
+        const process = debounce(() => bam());
+
+        globalThis.downup = {process, bam};
+
     </script>
+
     
     <button id="downup-btn" onclick="downup.bam()">translate</button>
 
     <div id="downup-wrapper">
-        <textarea id="markdown-text"></textarea>
+        <textarea id="markdown-text" name="markdown-text" onkeyup="downup.process()"></textarea>
         <div id="markup-text"></div>
     </div>
     
@@ -38,13 +52,13 @@
 
         #markdown-text {
             margin: 1rem;
-            min-width: 40%;
+            min-width: 50%;
             min-height: 50vh;
-            font-size: xx-large;
+            font-size: x-large;
         }
 
-        #markup-text {
-            font-size: x-larger;
+        div#markup-text {
+            width: 50%;
         }
 
     </style>
