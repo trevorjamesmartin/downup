@@ -137,7 +137,28 @@ describe("Parser test", () => {
 
     });
 
-    test("parse example", () => {
+    test("parse emphasis", () => {
+
+        let sample  = [
+            {
+                input: 'this is normal text. **this is emphasized text.**',
+                expectedOutput: 'this is normal text. <strong>this is emphasized text.</strong>'
+            },
+            {
+                input: `Italicized text is the *cat's meow*.`,
+                expectedOutput: `Italicized text is the <em>cat's meow</em>.`
+            }
+        ]
+
+        for (let {input, expectedOutput} of sample) {
+            lex = new Lexer(input);
+            p = new Parser(lex);
+            output = p.Parse();
+            expect(output).toBe(expectedOutput);
+        }
+    });
+
+    test("parse mixed", () => {
         let input = `# H1\n## H2\n### H3\n#### H4\n##### H5\n###### H6\n\nAlternatively, for H1 and H2, an underline-ish style:\n\nAlt-H1\n======\n\nAlt-H2\n------\n\n`;
 
         let expectedOutput= '<h1>H1</h1>\n' +

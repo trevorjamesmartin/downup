@@ -21,6 +21,12 @@ class Parser {
             h5: ({text}) => `<h5>${text}</h5>\n`,
             h6: ({text}) => `<h6>${text}</h6>\n`,
             hr: () => '<hr>',
+            emphasis: {
+                "**": ({text}) => `<strong>${text}</strong>`,
+                "__": ({text}) => `<strong>${text}</strong>`,
+                "*": ({text}) => `<em>${text}</em>`,
+                "_": ({text}) => `<em>${text}</em>`,
+            },
         }; 
         
         //  alternatively, you can register a tag for output
@@ -35,15 +41,12 @@ class Parser {
 
         this.registerPrefix(tkn.BANG, this.parseBanger);         // <img...
 
-        // TODO: unordered lists can MINUS PLUS or ASTERISK
+        // TODO: unordered lists may start with a MINUS, PLUS, or ASTERISK
         this.registerPrefix(tkn.MINUS, this.parseMinus);
         this.registerPrefix(tkn.PLUS, this.parsePlus);
         this.registerPrefix(tkn.ASTERISK, this.parseAsterisk);
-
-
         
         // TODO: ordered lists start with any number (yes, any number) followed by a period
-        //
         this.registerPrefix(tkn.NUMBER, this.parseNumber);
         
         // TODO: Emphasis, aka italics, with *asterisks* or _underscores_.
@@ -90,6 +93,24 @@ Parser.prototype.Parse = function() {
     return text;
 }
 
+Parser.prototype.ParseElements = function() {
+    let f, i;
+    let elements = [];
+
+    while (this.currentToken.Type != tkn.EOF) {
+        f = this.prefixParseFns[this.currentToken.Type];
+        
+        if (typeof f === 'function') {
+            elements.push(f());
+        } else {
+            elements.push(this.currentToken.Literal);
+        }
+
+        this.nextToken();
+    }
+    return elements;
+}
+
 Parser.prototype.nextToken = function() {
     this.currentToken = this.peekToken;
     this.peekToken = this.lex.NextToken();
@@ -116,6 +137,10 @@ Parser.prototype.parseBetween = function(startChar, endChar) {
     return content;
 }
 
+Parser.prototype.continues = function() {
+    return this.peekToken.Type !== tkn.EOF;
+}
+
 
 Parser.prototype.filter = function(f) {
     if (!f(this.currentToken)) {
@@ -124,9 +149,9 @@ Parser.prototype.filter = function(f) {
 
     let literal = '';
 
-    for (let ok = (this.peekToken.Type != tkn.EOF); ok && f(this.peekToken); this.nextToken()) {
+    for (let ok = this.continues(); ok && f(this.peekToken); this.nextToken()) {
         literal += this.currentToken.Literal;
-        ok = (this.peekToken.Type != tkn.EOF);
+        ok = this.continues(); 
     }
 
     if (f(this.currentToken)) {
@@ -183,6 +208,11 @@ Parser.prototype.parseAsterisk = function() {
         this.peekToken.Type === tkn.WSPACE) {
         return this.parseUnorderedList();
     }
+
+    if (this.currentToken.Literal.length < 3) {
+        return this.parseEmphasis();
+    }
+
     return this.currentToken.Literal;
 }
 
@@ -302,6 +332,10 @@ Parser.prototype.parseUnorderedList = function() {
         b = this.currentToken.Literal;
         wspace = this.peekToken.Type;
     }
+
+    // bullet wspace content (eol || eof)
+    // (-, +, *) content\n
+
     if (items.length > 0) {
         return `<ul>${items.map((text) => `<li>${text}</li>`).join('\n')}</ul>`;
     }
@@ -338,7 +372,42 @@ Parser.prototype.parseOrderedList = function() {
         return `<ol>${items.map((text) => `<li>${text}</li>`).join('\n')}</ol>`;
     }
     
-    return t.Literal;
+    return idx 
+}
+
+
+Parser.prototype.parseEmphasis = function() {
+    let boundary = this.currentToken.Literal;
+    
+    let f = this.tagFns["emphasis"][boundary];
+
+    if (!f) {
+        console.log('unrecognized boundary : ', boundary);
+        return this.currentToken.Literal;
+    }
+
+    this.nextToken(); 
+    
+    let literal = this.filter((toke) => !toke.Literal.includes(boundary));
+
+    this.nextToken(); // pre boundary
+    
+    // in case mid-content
+    let content = this.currentToken.Literal.split(boundary).filter((lit) => lit.length > 0);
+
+    literal += content.shift();
+
+    let result = f({text: literal});
+
+    if (content.length > 0) {
+        result += content.join(boundary);
+    }
+
+    this.nextToken(); // boundary
+
+    this.nextToken(); // next
+
+    return result; 
 }
 
 module.exports = Parser;
