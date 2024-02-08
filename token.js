@@ -47,6 +47,9 @@ const LBRACKET      = "{";
 const RBRACKET      = "}";
 const COLON         = ":";
 
+const UNDERSCORE    = "_";
+const TILDE         = "~";
+
 var keywords = {
     '#': CRASH,
     '!': BANG,
@@ -107,4 +110,6 @@ module.exports = {
     LBRACKET,
     RBRACKET,
     COLON,
+    TILDE,
+    UNDERSCORE
 }

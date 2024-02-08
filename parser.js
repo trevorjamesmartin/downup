@@ -1,5 +1,7 @@
 const tkn = require('./token.js');
 
+const Lexer = require('./lexer.js');
+
 class Parser {
 
     constructor(lexer) {
@@ -26,6 +28,7 @@ class Parser {
                 "__": ({text}) => `<strong>${text}</strong>`,
                 "*": ({text}) => `<em>${text}</em>`,
                 "_": ({text}) => `<em>${text}</em>`,
+                "~~": ({text}) => `<s>${text}</s>`, 
             },
         }; 
         
@@ -35,27 +38,20 @@ class Parser {
         });
 
         // readers
-        this.registerPrefix(tkn.LBRACE, this.parseLinkToResource); // <a href...
+        this.registerPrefix(tkn.LBRACE, this.parseLinkToResource);  // <a href...
 
-        this.registerPrefix(tkn.HEADING, this.parseHeader);   // <h{0-5}>...
+        this.registerPrefix(tkn.HEADING, this.parseHeader);         // <hr>, <h{0-6}>
 
-        this.registerPrefix(tkn.BANG, this.parseBanger);         // <img...
+        this.registerPrefix(tkn.BANG, this.parseBanger);            // <img...
 
-        // TODO: unordered lists may start with a MINUS, PLUS, or ASTERISK
         this.registerPrefix(tkn.MINUS, this.parseMinus);
+ 
         this.registerPrefix(tkn.PLUS, this.parsePlus);
         this.registerPrefix(tkn.ASTERISK, this.parseAsterisk);
-        
-        // TODO: ordered lists start with any number (yes, any number) followed by a period
         this.registerPrefix(tkn.NUMBER, this.parseNumber);
         
-        // TODO: Emphasis, aka italics, with *asterisks* or _underscores_.
-
-        //       Strong emphasis, aka bold, with **asterisks** or __underscores__.
-
-        //       Combined emphasis with **asterisks and _underscores_**.
-
-        //       Strikethrough uses two tildes. ~~Scratch this.~~
+        this.registerPrefix(tkn.UNDERSCORE, this.parseUnderscore);
+        this.registerPrefix(tkn.TILDE, this.parseTilde);
         
         // TODO: <table...
     }
@@ -203,6 +199,20 @@ Parser.prototype.parsePlus = function() {
     return this.currentToken.Literal;
 }
 
+Parser.prototype.parseUnderscore = function() {
+    if (this.currentToken.Literal.length < 3) {
+        return this.parseEmphasis();
+    }
+    return this.currentToken.Literal;
+}
+
+Parser.prototype.parseTilde = function() {
+    if (this.currentToken.Literal.length === 2) {
+        return this.parseEmphasis();
+    }
+    return this.currentToken.Literal;
+}
+
 Parser.prototype.parseAsterisk = function() {
     if (this.currentToken.Literal === tkn.ASTERISK &&
         this.peekToken.Type === tkn.WSPACE) {
@@ -293,6 +303,10 @@ Parser.prototype.parseHeader = function () {
 
     let text = this.filter((toke) => toke.Type != tkn.EOL);
 
+    if (!text) {
+        return `# ${this.currentToken.Literal}`;
+    }
+
     this.nextToken();
 
     if (typeof this.tagFns[tag] === 'function') {
@@ -318,7 +332,6 @@ Parser.prototype.parseNumber = function() {
 }
 
 Parser.prototype.parseUnorderedList = function() {
-    console.log('parseUnorderedList');
     let b = this.currentToken.Literal;
     let wspace = this.peekToken.Type;
     let bullets = [tkn.MINUS, tkn.PLUS, tkn.ASTERISK];
@@ -335,14 +348,14 @@ Parser.prototype.parseUnorderedList = function() {
 
     // bullet wspace content (eol || eof)
     // (-, +, *) content\n
-
+    
     if (items.length > 0) {
-        return `<ul>${items.map((text) => `<li>${text}</li>`).join('\n')}</ul>`;
+        // parse each item & return a list
+        const resolved = items.map((item) => (new Parser(new Lexer(item))).Parse())
+        return `<ul>${resolved.map((text) => `<li>${text}</li>`).join('\n')}</ul>`;
     }
-    
+   
     return t.Literal;
-
-    
 }
 
 Parser.prototype.parseOrderedList = function() {
@@ -369,7 +382,9 @@ Parser.prototype.parseOrderedList = function() {
     // 2. content\n
 
     if (items.length > 0) {
-        return `<ol>${items.map((text) => `<li>${text}</li>`).join('\n')}</ol>`;
+        // parse each item & return a list
+        const resolved = items.map((item) => (new Parser(new Lexer(item))).Parse())
+        return `<ol>${resolved.map((text) => `<li>${text}</li>`).join('\n')}</ol>`;
     }
     
     return idx 
@@ -377,37 +392,30 @@ Parser.prototype.parseOrderedList = function() {
 
 
 Parser.prototype.parseEmphasis = function() {
-    let boundary = this.currentToken.Literal;
+    let literal = '';
+    let t = this.currentToken.Literal;  // boundary
+    let f = this.tagFns["emphasis"][t];
     
-    let f = this.tagFns["emphasis"][boundary];
-
     if (!f) {
-        console.log('unrecognized boundary : ', boundary);
         return this.currentToken.Literal;
     }
-
-    this.nextToken(); 
     
-    let literal = this.filter((toke) => !toke.Literal.includes(boundary));
-
-    this.nextToken(); // pre boundary
-    
-    // in case mid-content
-    let content = this.currentToken.Literal.split(boundary).filter((lit) => lit.length > 0);
-
-    literal += content.shift();
-
-    let result = f({text: literal});
-
-    if (content.length > 0) {
-        result += content.join(boundary);
+    this.nextToken();
+   
+    if (this.currentToken.Literal.endsWith(t)) {
+        literal = this.currentToken.Literal.substring(0, this.currentToken.Literal.length - t.length);
+    } else {
+        literal = this.filter((toke) => !toke.Literal.includes(t)); // filter peekToken
+        this.nextToken();
+        if (this.currentToken.Literal.endsWith(t)) {
+            literal += this.currentToken.Literal.substring(0, this.currentToken.Literal.length - t.length);
+        } 
     }
 
-    this.nextToken(); // boundary
+    // parsing the text we return may resolve any
+    // `Combined emphasis with ** asterisks and _underscores_ **`
+    return f({text: (new Parser(new Lexer(literal))).Parse()});
 
-    this.nextToken(); // next
-
-    return result; 
 }
 
 module.exports = Parser;
