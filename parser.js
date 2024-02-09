@@ -2,9 +2,12 @@ const tkn = require('./token.js');
 
 const Lexer = require('./lexer.js');
 
+const defaultTags = require('./defaultTags.js');
+
+
 class Parser {
 
-    constructor(lexer) {
+    constructor(lexer, customTags={}) {
         this.errors = [];
         this.lex = lexer;
         this.currentToken = undefined;
@@ -14,25 +17,10 @@ class Parser {
         
         this.prefixParseFns = {};
 
-        //  override to customize your markup element(s)
-        this.tagFns = {
-            h1: ({text}) => `<h1>${text}</h1>\n`,
-            h2: ({text}) => `<h2>${text}</h2>\n`,
-            h3: ({text}) => `<h3>${text}</h3>\n`,
-            h4: ({text}) => `<h4>${text}</h4>\n`,
-            h5: ({text}) => `<h5>${text}</h5>\n`,
-            h6: ({text}) => `<h6>${text}</h6>\n`,
-            hr: () => '<hr>',
-            emphasis: {
-                "**": ({text}) => `<strong>${text}</strong>`,
-                "__": ({text}) => `<strong>${text}</strong>`,
-                "*": ({text}) => `<em>${text}</em>`,
-                "_": ({text}) => `<em>${text}</em>`,
-                "~~": ({text}) => `<s>${text}</s>`, 
-            },
-        }; 
-        
-        //  alternatively, you can register a tag for output
+        //  customize your markup elementd(s)
+        this.tagFns = {...defaultTags, ...customTags};
+
+        //  alternatively, you can register a single tag for output
         this.registerTag("img", function({src, alt}) {
             return `<img src="${src}" alt="${alt || ''}"></img>`
         });
@@ -52,8 +40,20 @@ class Parser {
         
         this.registerPrefix(tkn.UNDERSCORE, this.parseUnderscore);
         this.registerPrefix(tkn.TILDE, this.parseTilde);
+
+        this.registerPrefix(tkn.PERIOD, this.parsePeriod);
         
         // TODO: <table...
+    };
+
+
+    _parse(text) {
+        if (!this.tagFns) {
+            return
+        }
+        let tagFns = {...this.tagFns}; 
+        let p = new Parser(new Lexer(text, tagFns));
+        return p.Parse();
     }
 }
 
@@ -133,6 +133,24 @@ Parser.prototype.parseBetween = function(startChar, endChar) {
     return content;
 }
 
+Parser.prototype.parseUntil = function(endChar) {
+    if (this.currentToken.Literal === endChar) {
+        this.errors.push(`[parseUntil] expects current token NOT to be '${endChar}', got '${JSON.stringify(this.currentToken)}'`);
+        return "[error: OFF BY 1]"
+    }
+
+    let content = this.filter((token) => token.Literal != endChar) || '';
+
+    this.nextToken();
+
+    if (this.currentToken.Literal !== endChar) {
+        return startChar + content;
+    }
+    
+    return content;
+}
+
+
 Parser.prototype.continues = function() {
     return this.peekToken.Type !== tkn.EOF;
 }
@@ -210,6 +228,10 @@ Parser.prototype.parseTilde = function() {
     if (this.currentToken.Literal.length === 2) {
         return this.parseEmphasis();
     }
+    return this.currentToken.Literal;
+}
+
+Parser.prototype.parsePeriod = function() {
     return this.currentToken.Literal;
 }
 
@@ -351,7 +373,7 @@ Parser.prototype.parseUnorderedList = function() {
     
     if (items.length > 0) {
         // parse each item & return a list
-        const resolved = items.map((item) => (new Parser(new Lexer(item))).Parse())
+        const resolved = items.map((item) => this._parse(item)); 
         return `<ul>${resolved.map((text) => `<li>${text}</li>`).join('\n')}</ul>`;
     }
    
@@ -383,7 +405,7 @@ Parser.prototype.parseOrderedList = function() {
 
     if (items.length > 0) {
         // parse each item & return a list
-        const resolved = items.map((item) => (new Parser(new Lexer(item))).Parse())
+        const resolved = items.map((item) => this._parse(item)); 
         return `<ol>${resolved.map((text) => `<li>${text}</li>`).join('\n')}</ol>`;
     }
     
@@ -392,30 +414,19 @@ Parser.prototype.parseOrderedList = function() {
 
 
 Parser.prototype.parseEmphasis = function() {
-    let literal = '';
-    let t = this.currentToken.Literal;  // boundary
-    let f = this.tagFns["emphasis"][t];
+    let lit = this.currentToken.Literal;
+    let f = this.tagFns["emphasis"][lit];
     
     if (!f) {
         return this.currentToken.Literal;
     }
-    
+
     this.nextToken();
-   
-    if (this.currentToken.Literal.endsWith(t)) {
-        literal = this.currentToken.Literal.substring(0, this.currentToken.Literal.length - t.length);
-    } else {
-        literal = this.filter((toke) => !toke.Literal.includes(t)); // filter peekToken
-        this.nextToken();
-        if (this.currentToken.Literal.endsWith(t)) {
-            literal += this.currentToken.Literal.substring(0, this.currentToken.Literal.length - t.length);
-        } 
-    }
-
-    // parsing the text we return may resolve any
-    // `Combined emphasis with ** asterisks and _underscores_ **`
-    return f({text: (new Parser(new Lexer(literal))).Parse()});
-
+    let input = this.parseUntil(lit);
+    
+    let innerText = this._parse(input);
+    
+    return f({ text: innerText });
 }
 
 module.exports = Parser;
