@@ -85,7 +85,7 @@ Lexer.prototype.NextToken = function() {
     let delimit = [
         '!', ' ', '\n', '\r', '\t', 
         '[', ']', '(', ')', '{', '}', 
-        '"', "'", "`",
+        '"', "'", "`", "*", "_", "~", ".",
         0];
 
     switch (this.ch) {
@@ -152,6 +152,11 @@ Lexer.prototype.NextToken = function() {
         case '~':
             literal = this.filter((ch) => ch === '~');
             token = new Token(tkn.TILDE, literal);
+            break;
+
+        case '.':
+            literal = this.filter((ch) => ch === '.');
+            token = new Token(tkn.PERIOD, literal);
             break;
 
         default:

@@ -49,6 +49,7 @@ const COLON         = ":";
 
 const UNDERSCORE    = "_";
 const TILDE         = "~";
+const PERIOD        = ".";
 
 var keywords = {
     '#': CRASH,
@@ -111,5 +112,6 @@ module.exports = {
     RBRACKET,
     COLON,
     TILDE,
-    UNDERSCORE
+    UNDERSCORE,
+    PERIOD
 }
