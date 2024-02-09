@@ -20,11 +20,6 @@ class Parser {
         //  customize your markup elementd(s)
         this.tagFns = {...defaultTags, ...customTags};
 
-        //  alternatively, you can register a single tag for output
-        this.registerTag("img", function({src, alt}) {
-            return `<img src="${src}" alt="${alt || ''}"></img>`
-        });
-
         // readers
         this.registerPrefix(tkn.LBRACE, this.parseLinkToResource);  // <a href...
 
@@ -328,6 +323,8 @@ Parser.prototype.parseHeader = function () {
     if (!text) {
         return `# ${this.currentToken.Literal}`;
     }
+    
+    text = this._parse(text);
 
     this.nextToken();
 

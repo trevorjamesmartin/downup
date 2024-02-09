@@ -6,6 +6,7 @@ module.exports = {
     h5: ({text}) => `<h5>${text}</h5>\n`,
     h6: ({text}) => `<h6>${text}</h6>\n`,
     hr: () => '<hr>',
+    img: ({src, alt}) => `<img src="${src}" alt="${alt || ''}"></img>`,
     emphasis: {
         "**": ({text}) => `<strong>${text}</strong>`,
         "__": ({text}) => `<strong>${text}</strong>`,
