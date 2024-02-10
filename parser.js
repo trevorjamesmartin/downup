@@ -133,16 +133,29 @@ Parser.prototype.parseBetween = function(startChar, endChar) {
     return content;
 }
 
+Parser.prototype.escapeHTML(code) {
+    let browserSafe = '';
+    const tagsToReplace = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;'
+    };
+
+    if (typeof code === 'string') {
+        browserSafe = code.replace(/[&<>]/g, function(tag) {
+            return tagsToReplace[tag] || tag;
+        });
+    }
+
+    return browserSafe;
+}
+
 Parser.prototype.parseBacktick = function() {
     let lit = this.currentToken.Literal;
     this.nextToken();
     let code = this.parseUntil(lit) || '';
-
-    if (code.length > 0) {
-        return `<pre><code>${code}</code></pre>`; 
-    }
-
-    return code;
+    let plaintext = this.escapeHTML(code);
+    return `<pre><code>${plaintext}</code></pre>`; 
 }
 
 Parser.prototype.parsePipe = function() {
