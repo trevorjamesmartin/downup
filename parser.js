@@ -133,7 +133,7 @@ Parser.prototype.parseBetween = function(startChar, endChar) {
     return content;
 }
 
-Parser.prototype.escapeHTML(code) {
+Parser.prototype.escapeHTML = function(code) {
     let browserSafe = '';
     const tagsToReplace = {
         '&': '&amp;',
