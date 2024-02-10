@@ -37,6 +37,8 @@ class Parser {
         this.registerPrefix(tkn.TILDE, this.parseTilde);
 
         this.registerPrefix(tkn.PERIOD, this.parsePeriod);
+
+        this.registerPrefix(tkn.GT, this.parseGT);
         
         // TODO: <table...
     };
@@ -127,6 +129,45 @@ Parser.prototype.parseBetween = function(startChar, endChar) {
     
     return content;
 }
+
+Parser.prototype.parseGT = function() {
+    // Blockquotes begin with `> `
+    if (this.peekToken.Type !== tkn.WSPACE) {
+        return this.currentToken.Literal;
+    }
+
+    let content = this.parseBlockQuote(this.currentToken.Literal);
+    
+
+    return content;
+}
+
+
+Parser.prototype.parseBlockQuote = function(bq) {
+    let quotes = [];
+
+    // TODO : multi-line blockquote + test
+
+    while (this.currentToken.Literal === bq) {
+
+        switch(bq) {
+            case ">":
+                this.nextToken(); // ` `
+                this.nextToken(); // CONTENT
+                break;
+            default:
+                this.nextToken(); // CONTENT
+                break;
+        }
+        
+        // start with a single case
+        let content = this.filter((token) => token.Literal != bq) || '';
+        quotes.push(content);
+        this.nextToken();
+    }
+    return `<blockquote>${quotes.join('')}</blockquote>`;
+}
+
 
 Parser.prototype.parseUntil = function(endChar) {
     if (this.currentToken.Literal === endChar) {

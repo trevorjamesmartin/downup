@@ -147,6 +147,10 @@ describe("Parser test", () => {
             {
                 input: `Italicized text is the *cat's meow*.`,
                 expectedOutput: `Italicized text is the <em>cat's meow</em>.`
+            },
+            {
+                input: `Love**is**bold`,
+                expectedOutput: `Love<strong>is</strong>bold`,
             }
         ]
 
@@ -156,6 +160,23 @@ describe("Parser test", () => {
             output = p.Parse();
             expect(output).toBe(expectedOutput);
         }
+    });
+
+    test("parse blockquotes", ()=> {
+        let sample = [
+            {
+                input:`> Dorothy followed her through many of the beautiful rooms in her castle.`,
+                expectedOutput: `<blockquote>Dorothy followed her through many of the beautiful rooms in her castle.</blockquote>` 
+            }
+        ];
+
+        for (let {input, expectedOutput} of sample) {
+            lex = new Lexer(input);
+            p = new Parser(lex);
+            output = p.Parse();
+            expect(output).toBe(expectedOutput);
+        }
+
     });
 
     test("parse mixed", () => {
