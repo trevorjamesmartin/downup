@@ -51,7 +51,9 @@ const UNDERSCORE    = "_";
 const TILDE         = "~";
 const PERIOD        = ".";
 
-const BACKTICK      = "`"; 
+const BACKTICK      = "`";
+
+const PIPE          = "|";
 
 var keywords = {
     '#': CRASH,
@@ -116,5 +118,6 @@ module.exports = {
     TILDE,
     UNDERSCORE,
     PERIOD,
-    BACKTICK
+    BACKTICK,
+    PIPE
 }

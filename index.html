@@ -78,6 +78,31 @@
           border: 1px solid rgb(187,197,215);
           border-radius: 3px;
         }
+
+        table {
+          border-collapse: collapse;
+        }
+
+        td, th {
+          border: 1px solid #ccc;
+          padding: 0.5rem;
+          text-align: left;
+        }
+
+        
+        @media (prefers-color-scheme: light) {
+          thead {
+            color: black;
+            background-color: grey;
+          }
+        }
+
+        @media (prefers-color-scheme: dark) {
+          thead {
+            color: white;
+            background-color: #3b3b3b;
+          }
+        }
     </style>
 </body>
 </html>

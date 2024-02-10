@@ -179,6 +179,27 @@ describe("Parser test", () => {
 
     });
 
+    test("parse table", () => {
+        let sample = [
+            {
+                input: `| Syntax | Description |\n| --- | ----------- |\n| Header | Title |\n| Paragraph | Text |`,
+                expectedOutput:`<table><thead><tr><th>Syntax</th><th>Description</th></tr></thead><tbody><tr><td>Header</td><td>Title</td></tr><tr><td>Paragraph</td><td>Text</td></tr></tbody></table>`
+            },
+            {
+                input: `| Syntax | Description |\n| Header | Title |\n| Paragraph | Text |`,
+                expectedOutput:`<table><tbody><tr><td>Syntax</td><td>Description</td></tr><tr><td>Header</td><td>Title</td></tr><tr><td>Paragraph</td><td>Text</td></tr></tbody></table>`
+            },
+        ];
+
+        for (let {input, expectedOutput} of sample) {
+            lex = new Lexer(input);
+            p = new Parser(lex);
+            output = p.Parse();
+            expect(output).toBe(expectedOutput);
+        }
+
+    });
+
     test("parse mixed", () => {
         let input = `# H1\n## H2\n### H3\n#### H4\n##### H5\n###### H6\n\nAlternatively, for H1 and H2, an underline-ish style:\n\nAlt-H1\n======\n\nAlt-H2\n------\n\n`;
 

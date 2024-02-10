@@ -43,6 +43,7 @@ class Parser {
         this.registerPrefix(tkn.BACKTICK, this.parseBacktick);
         
         // TODO: <table...
+        this.registerPrefix(tkn.PIPE, this.parsePipe);
     };
 
 
@@ -142,6 +143,62 @@ Parser.prototype.parseBacktick = function() {
     }
 
     return code;
+}
+
+Parser.prototype.parsePipe = function() {
+    let row, cols, headers;
+    let tbl = {header:[], rows:[]};
+    
+    while (this.currentToken.Literal === '|') {
+        row = this.filter((toke) => toke.Type !== tkn.EOL) || '';
+        this.nextToken();
+        this.nextToken();
+        headers = 0;
+        cols = row.split('|')
+                  .filter((c) => c !== '')
+                  .map((c) => {
+                let value = c.trim();
+                if (value.substring(0, 3) === '---') {
+                    headers++;
+                }
+                return value;
+            });
+
+        if (headers && cols.length === headers && tbl.rows.length > 0) {
+            // previous row was headers
+            tbl.header.push(tbl.rows.pop());
+        } else {
+            tbl.rows.push(cols);
+        }
+
+        headers = 0;
+    }
+
+    let head = '';
+
+    if (tbl.header.length > 0) {
+        head += '<thead><tr>';
+        head += tbl.header[0].map((c) => `<th>${c}</th>`).join('');    
+        head += '</tr></thead>';
+    }
+
+    let body = '';
+
+    if (tbl.rows.length > 0) {
+        
+        body += '<tbody>';
+
+        for (let bRow of tbl.rows) {
+            body += '<tr>';
+            body += bRow.map((c) =>`<td>${c}</td>`).join('');
+            body += '</tr>';
+        }
+        body += '</tbody>';
+    }
+
+    let result = `<table>${head}${body}</table>`;
+
+    return result;
 }
 
 Parser.prototype.parseGT = function() {
@@ -486,4 +543,5 @@ Parser.prototype.parseEmphasis = function() {
 }
 
 module.exports = Parser;
+`| Syntax | Description |\n| --- | ----------- |\n| Header | Title |\n| Paragraph | Text |`
 
