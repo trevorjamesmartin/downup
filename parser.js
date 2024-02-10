@@ -39,6 +39,8 @@ class Parser {
         this.registerPrefix(tkn.PERIOD, this.parsePeriod);
 
         this.registerPrefix(tkn.GT, this.parseGT);
+
+        this.registerPrefix(tkn.BACKTICK, this.parseBacktick);
         
         // TODO: <table...
     };
@@ -130,6 +132,18 @@ Parser.prototype.parseBetween = function(startChar, endChar) {
     return content;
 }
 
+Parser.prototype.parseBacktick = function() {
+    let lit = this.currentToken.Literal;
+    this.nextToken();
+    let code = this.parseUntil(lit) || '';
+
+    if (code.length > 0) {
+        return `<pre><code>${code}</code></pre>`; 
+    }
+
+    return code;
+}
+
 Parser.prototype.parseGT = function() {
     // Blockquotes begin with `> `
     if (this.peekToken.Type !== tkn.WSPACE) {
@@ -161,7 +175,7 @@ Parser.prototype.parseBlockQuote = function(bq) {
         }
         
         // start with a single case
-        let content = this.filter((token) => token.Literal != bq) || '';
+        let content = this.filter((token) => token.Type != tkn.EOL) || '';
         quotes.push(this._parse(content));
         this.nextToken();
     }
