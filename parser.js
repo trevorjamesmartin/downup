@@ -162,7 +162,7 @@ Parser.prototype.parseBlockQuote = function(bq) {
         
         // start with a single case
         let content = this.filter((token) => token.Literal != bq) || '';
-        quotes.push(content);
+        quotes.push(this._parse(content));
         this.nextToken();
     }
     return `<blockquote>${quotes.join('')}</blockquote>`;
@@ -180,7 +180,7 @@ Parser.prototype.parseUntil = function(endChar) {
     this.nextToken();
 
     if (this.currentToken.Literal !== endChar) {
-        return startChar + content;
+        return endChar + content;
     }
     
     return content;
@@ -454,6 +454,7 @@ Parser.prototype.parseOrderedList = function() {
 Parser.prototype.parseEmphasis = function() {
     let lit = this.currentToken.Literal;
     let f = this.tagFns["emphasis"][lit];
+    let innerText;
     
     if (!f) {
         return this.currentToken.Literal;
@@ -461,8 +462,11 @@ Parser.prototype.parseEmphasis = function() {
 
     this.nextToken();
     let input = this.parseUntil(lit);
-    
-    let innerText = this._parse(input);
+    if (this.currentToken.Literal === lit) {
+        innerText = this._parse(input);
+    } else {
+        innerText = input;
+    }
     
     return f({ text: innerText });
 }
