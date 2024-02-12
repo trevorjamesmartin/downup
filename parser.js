@@ -585,5 +585,4 @@ Parser.prototype.parseEmphasis = function() {
 }
 
 module.exports = Parser;
-`| Syntax | Description |\n| --- | ----------- |\n| Header | Title |\n| Paragraph | Text |`
 
