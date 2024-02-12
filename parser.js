@@ -119,8 +119,28 @@ Parser.prototype.parseBetween = function(startChar, endChar) {
         this.errors.push(`[parseBetween] expected current token to be '${startChar}', got '${JSON.stringify(this.currentToken)}'`);
         return
     }
+    let closer = { '[':']', '{':'}', '(':')' }[startChar];
+    let depth = 0;
 
-    let content = this.filter((token) => token.Literal != endChar) || '';
+    if (endChar === closer) {
+        depth++;
+    }
+
+    let content = this.filter(
+        (token) => {
+            let ok = true;
+            
+            if (token.Literal === startChar && endChar === closer) {
+                depth++;
+            }
+
+            if (token.Literal === endChar) {
+                depth--;
+                ok = depth > 0;
+            }
+            
+            return ok;
+        }) || '';
 
     this.nextToken();
 
@@ -265,7 +285,7 @@ Parser.prototype.parseBlockQuote = function(bq) {
 
         switch(bq) {
             case ">":
-                this.nextToken(); // ` `
+                this.nextToken();  /// ` `
                 this.nextToken(); // CONTENT
                 break;
             default:
@@ -336,8 +356,13 @@ Parser.prototype.parseLinkToResource = function() {
         // not a link, re-wrap
         return `[${text}]`;
     }
-        
+
     let href = this.parseBetween(tkn.LPAREN, tkn.RPAREN);
+
+    if (text[0] === tkn.BANG && text[1] === tkn.LBRACE) {
+        // image with link ?
+        text = this._parse(text);
+    }
 
     if (href[0] === tkn.LPAREN) {
         return text + href;

@@ -5,11 +5,18 @@ const Parser = require("../parser.js");
 
 describe("Parser test", () => {
 
-    test("parse url", () => {
+    test("parse anchor link", () => {
         let input = "[link to document](./README.md)";
         let lex = new Lexer(input);
         let p = new Parser(lex);
         expect(p.Parse()).toBe(`<a href="./README.md">link to document</a>`);
+    });
+
+    test("parse image link", () => {
+        let input = "[![Electron Logo](https://electronjs.org/images/electron-logo.svg)](https://electronjs.org)";
+        let lex = new Lexer(input);
+        let p = new Parser(lex);
+        expect(p.Parse()).toBe(`<a href="https://electronjs.org"><img src="https://electronjs.org/images/electron-logo.svg" alt="Electron Logo"></img></a>`);
     });
 
     test("parse header tag", () => {
