@@ -161,19 +161,34 @@ Parser.prototype.parseBacktick = function() {
 Parser.prototype.parsePipe = function() {
     let row, cols, headers;
     let tbl = {header:[], rows:[]};
-    
+    let alignment = [];
+
     while (this.currentToken.Literal === '|') {
         row = this.filter((toke) => toke.Type !== tkn.EOL) || '';
         this.nextToken();
         this.nextToken();
         headers = 0;
+
         cols = row.split('|')
                   .filter((c) => c !== '')
                   .map((c) => {
+                let align = "";
                 let value = c.trim();
-                if (value.substring(0, 3) === '---') {
-                    headers++;
+                switch(value.substring(0, 3)) {
+                    case "---":
+                        headers++;
+                        align = value.endsWith(":") ? "right" : "";
+                        alignment.push(align);
+                        break;
+                    case ":--":
+                        headers++;
+                        align = value.endsWith(":") ? "center" : "left";
+                        alignment.push(align);
+                        break;
+                    default:
+                        break;
                 }
+                
                 return value;
             });
 
@@ -189,9 +204,21 @@ Parser.prototype.parsePipe = function() {
 
     let head = '';
 
+    function getAlignment(idx) {
+        let aln = alignment[idx] || "";
+        if (aln.length > 0) {
+            aln = ` style="text-align: ${alignment[idx]};" `
+        }
+        return aln;
+    }
+
     if (tbl.header.length > 0) {
+        let arr = tbl.header[0];
         head += '<thead><tr>';
-        head += tbl.header[0].map((c) => `<th>${c}</th>`).join('');    
+        head += arr.map((c, idx) => {
+            return `<th${getAlignment(idx)}>${this._parse(this.escapeHTML(c))}</th>`;
+        }).join('');
+        
         head += '</tr></thead>';
     }
 
@@ -203,7 +230,9 @@ Parser.prototype.parsePipe = function() {
 
         for (let bRow of tbl.rows) {
             body += '<tr>';
-            body += bRow.map((c) =>`<td>${c}</td>`).join('');
+            body += bRow.map((c, idx) =>{
+                return `<td${getAlignment(idx)}>${ this._parse( this.escapeHTML(c) )}</td>`
+            }).join('');
             body += '</tr>';
         }
         body += '</tbody>';
