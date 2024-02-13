@@ -25,9 +25,10 @@ module.exports = {
         return `<ul>${listElements}</ul>`;
     },
 
+    blockquote: (quotes) => `<blockquote>${quotes.join('<br>')}</blockquote>`,
+    
     "```": ({text}) => `<pre><code>${text}</code></pre>`,
 
-    blockquote: (quotes) => `<blockquote>${quotes.join('<br>')}</blockquote>`,
 
 };
 
