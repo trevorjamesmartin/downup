@@ -174,10 +174,15 @@ Parser.prototype.parseBacktick = function() {
     let lit = this.currentToken.Literal;
     this.nextToken();
     let code = this.parseUntil(lit) || '';
+    
     let plaintext = this.escapeHTML(code);
-    return `<pre><code>${plaintext}</code></pre>`; 
+
+    let wrapper = this.tagFns[lit] || this.tagFns["```"];
+
+    return wrapper(plaintext);
 }
 
+// todo : extract table logic into this.tagFns["table"]
 Parser.prototype.parsePipe = function() {
     let row, cols, headers;
     let tbl = {header:[], rows:[]};
@@ -285,11 +290,13 @@ Parser.prototype.parseBlockQuote = function(bq) {
 
         switch(bq) {
             case ">":
-                this.nextToken();  /// ` `
-                this.nextToken(); // CONTENT
+                if (this.peekToken.Type === tkn.WSPACE) {
+                    this.nextToken();
+                }
+                this.nextToken(); //-> CONTENT
                 break;
             default:
-                this.nextToken(); // CONTENT
+                this.nextToken(); //-> CONTENT
                 break;
         }
         
@@ -297,8 +304,16 @@ Parser.prototype.parseBlockQuote = function(bq) {
         let content = this.filter((token) => token.Type != tkn.EOL) || '';
         quotes.push(this._parse(content));
         this.nextToken();
+        this.nextToken();
     }
-    return `<blockquote>${quotes.join('')}</blockquote>`;
+
+    let f = this.tagFns["blockquote"];
+    if (typeof f === 'function') {
+        return f(quotes);
+    }
+
+    // no rewind ? 
+    return `> ${quotes.join('\n' + bq)}`;
 }
 
 
@@ -473,6 +488,7 @@ Parser.prototype.parseHeader = function () {
     
     let num = t.Literal.length;
 
+    // todo: check tokens for horizontal rule 
     if (num === 1 && this.peekToken.Type === tkn.EOL) {
         this.nextToken();
         this.nextToken();
@@ -512,8 +528,9 @@ Parser.prototype.parseHeader = function () {
         return this.tagFns[tag]({text});
     }
 
+    return text;
     // return vanilla HTML
-    return `<${tag}>${text}</${tag}>\n`;
+    //return `<${tag}>${text}</${tag}>\n`;
 }
 
 
@@ -544,13 +561,10 @@ Parser.prototype.parseUnorderedList = function() {
         wspace = this.peekToken.Type;
     }
 
-    // bullet wspace content (eol || eof)
-    // (-, +, *) content\n
-    
     if (items.length > 0) {
-        // parse each item & return a list
-        const resolved = items.map((item) => this._parse(item)); 
-        return `<ul>${resolved.map((text) => `<li>${text}</li>`).join('\n')}</ul>`;
+        let ul = this.tagFns["ul"];
+        const resolved = items.map((item) => this._parse(item));
+        return ul(resolved);
     }
    
     return t.Literal;
@@ -559,7 +573,6 @@ Parser.prototype.parseUnorderedList = function() {
 Parser.prototype.parseOrderedList = function() {
     let idx = this.currentToken.Literal; 
     let wspace = this.peekToken.Type;
-    
     let items = [];
 
     while (idx.endsWith('.') && wspace === tkn.WSPACE) {
@@ -575,14 +588,10 @@ Parser.prototype.parseOrderedList = function() {
         wspace = this.peekToken.Type;
     }
 
-    // number wspace content (eol || eof)
-    // 1. content\n
-    // 2. content\n
-
     if (items.length > 0) {
-        // parse each item & return a list
-        const resolved = items.map((item) => this._parse(item)); 
-        return `<ol>${resolved.map((text) => `<li>${text}</li>`).join('\n')}</ol>`;
+        let ol = this.tagFns["ol"];
+        const resolved = items.map((item) => this._parse(item));
+        return ol(resolved);
     }
     
     return idx 

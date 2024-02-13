@@ -14,5 +14,20 @@ module.exports = {
         "_": ({text}) => `<em>${text}</em>`,
         "~~": ({text}) => `<s>${text}</s>`, 
     },
+
+    ol: (items) => {
+        let listElements = items?.map((i) => `<li>${i}</li>`).join('\n')
+        return `<ol>${listElements}</ol>`;
+    },
+
+    ul: (items) => {
+        let listElements = items?.map((i) => `<li>${i}</li>`).join('\n')
+        return `<ul>${listElements}</ul>`;
+    },
+
+    "```": ({text}) => `<pre><code>${text}</code></pre>`,
+
+    blockquote: (quotes) => `<blockquote>${quotes.join('<br>')}</blockquote>`,
+
 };
 
