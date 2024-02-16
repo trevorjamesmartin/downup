@@ -164,7 +164,7 @@ describe("Parser test", () => {
         for (let {input, expectedOutput} of sample) {
             lex = new Lexer(input);
             p = new Parser(lex);
-            output = p.Parse();
+            output = p.Parse(1); // don't wrap result in <p>aragraph
             expect(output).toBe(expectedOutput);
         }
     });
@@ -172,8 +172,23 @@ describe("Parser test", () => {
     test("parse blockquotes", ()=> {
         let sample = [
             {
+                // 1 liner
                 input:`> Dorothy followed her through many of the beautiful rooms in her castle.`,
-                expectedOutput: `<blockquote>Dorothy followed her through many of the beautiful rooms in her castle.</blockquote>` 
+                expectedOutput: `<blockquote>Dorothy followed her through many of the beautiful rooms in her castle.</blockquote>`
+            },
+            {
+                // 1 multi-line block quote
+                input: `> If you tell the truth, you don't have to remember anything.\n> - Mark Twain`,
+                expectedOutput: `<blockquote>If you tell the truth, you don't have to remember anything.\n<ul><li>Mark Twain</li></ul></blockquote>` 
+            },
+            {
+                // 2 multiline block quotes
+                input: `> It is better to remain silent at the risk of being thought a fool, than to talk and remove all doubt of it.\n> - Maurice Switzer, Mrs. Goose, Her Book\n\n> I have not failed. I've just found 10,000 ways that won't work.\n> - Thomas A. Edison`,
+                expectedOutput:`<blockquote>It is better to remain silent at the risk of being thought a fool, than to talk and remove all doubt of it.\n<ul><li>Maurice Switzer, Mrs. Goose, Her Book</li></ul></blockquote><blockquote>I have not failed. I've just found 10,000 ways that won't work.\n<ul><li>Thomas A. Edison</li></ul></blockquote>`
+            },
+            {
+                input : `> #### The quarterly results look great!\n>\n> - Revenue was off the chart.\n> - Profits were higher than ever.\n>\n>  *Everything* is going according to **plan**.`,
+                expectedOutput: `<blockquote><h4>The quarterly results look great!</h4>\n\n<ul><li>Revenue was off the chart.</li>\n<li>Profits were higher than ever.</li></ul><em>Everything</em> is going according to <strong>plan</strong>.</blockquote>`
             }
         ];
 
@@ -205,6 +220,16 @@ describe("Parser test", () => {
             expect(output).toBe(expectedOutput);
         }
 
+    });
+
+    test("parse paragraphs", () => {
+        let input = `You can use two or more spaces (commonly referred to as “trailing whitespace”) for line breaks in nearly every Markdown application, but it’s controversial. It’s hard to see trailing whitespace in an editor, and many people accidentally or intentionally put two spaces after every sentence. For this reason, you may want to use something other than trailing whitespace for line breaks. If your Markdown application supports HTML, you can use the br HTML tag.\n\n\nFor compatibility, use trailing white space or the br HTML tag at the end of the line.\n\n\nThere are two other options I don’t recommend using. CommonMark and a few other lightweight markup languages let you type a backslash (\) at the end of the line, but not all Markdown applications support this, so it isn’t a great option from a compatibility perspective. And at least a couple lightweight markup languages don’t require anything at the end of the line — just type return and they’ll create a line break.`;
+
+        let expectedOutput = `<p>You can use two or more spaces (commonly referred to as “trailing whitespace”) for line breaks in nearly every Markdown application, but it’s controversial. It’s hard to see trailing whitespace in an editor, and many people accidentally or intentionally put two spaces after every sentence. For this reason, you may want to use something other than trailing whitespace for line breaks. If your Markdown application supports HTML, you can use the br HTML tag.</p><p>For compatibility, use trailing white space or the br HTML tag at the end of the line.</p><p>There are two other options I don’t recommend using. CommonMark and a few other lightweight markup languages let you type a backslash (\) at the end of the line, but not all Markdown applications support this, so it isn’t a great option from a compatibility perspective. And at least a couple lightweight markup languages don’t require anything at the end of the line — just type return and they’ll create a line break.</p>`;
+
+        p = new Parser(new Lexer(input));
+        output = p.Parse();
+        expect(output).toBe(expectedOutput);
     });
 
     test("parse mixed", () => {

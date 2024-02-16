@@ -16,49 +16,63 @@ class Parser {
         this.nextToken(); // peekToken
         
         this.prefixParseFns = {};
+        this.postProcessFns = {};
 
         //  customize your markup elementd(s)
         this.tagFns = {...defaultTags, ...customTags};
 
         // readers
-        this.registerPrefix(tkn.LBRACE, this.parseLinkToResource);  // <a href...
+        this.registerReader(tkn.LBRACE, this.parseLinkToResource);  // <a href...
 
-        this.registerPrefix(tkn.HEADING, this.parseHeader);         // <hr>, <h{0-6}>
+        this.registerReader(tkn.HEADING, this.parseHeader);         // <hr>, <h{0-6}>
 
-        this.registerPrefix(tkn.BANG, this.parseBanger);            // <img...
+        this.registerReader(tkn.BANG, this.parseBanger);            // <img...
 
-        this.registerPrefix(tkn.MINUS, this.parseMinus);
+        this.registerReader(tkn.MINUS, this.parseMinus);
  
-        this.registerPrefix(tkn.PLUS, this.parsePlus);
-        this.registerPrefix(tkn.ASTERISK, this.parseAsterisk);
-        this.registerPrefix(tkn.NUMBER, this.parseNumber);
+        this.registerReader(tkn.PLUS, this.parsePlus);
+        this.registerReader(tkn.ASTERISK, this.parseAsterisk);
+        this.registerReader(tkn.NUMBER, this.parseNumber);
         
-        this.registerPrefix(tkn.UNDERSCORE, this.parseUnderscore);
-        this.registerPrefix(tkn.TILDE, this.parseTilde);
+        this.registerReader(tkn.UNDERSCORE, this.parseUnderscore);
+        this.registerReader(tkn.TILDE, this.parseTilde);
 
-        this.registerPrefix(tkn.PERIOD, this.parsePeriod);
+        this.registerReader(tkn.PERIOD, this.parsePeriod);
 
-        this.registerPrefix(tkn.GT, this.parseGT);
+        this.registerReader(tkn.GT, this.parseGT);
 
-        this.registerPrefix(tkn.BACKTICK, this.parseBacktick);
+        this.registerReader(tkn.BACKTICK, this.parseBacktick);
         
-        // TODO: <table...
-        this.registerPrefix(tkn.PIPE, this.parsePipe);
+        this.registerReader(tkn.PIPE, this.parsePipe);
+
+        // @note: adding the paragraph tag(s) after processing
+        this.registerProcessor(tkn.CONTENT, this.wrapParagraphs)
     };
 
-
-    _parse(text) {
+    _parse(text, pass=1) {
         if (!this.tagFns) {
             return
         }
         let tagFns = {...this.tagFns}; 
         let p = new Parser(new Lexer(text, tagFns));
-        return p.Parse();
+        return p.Parse(pass);
     }
 }
 
-Parser.prototype.registerPrefix = function(tokenLiteral, f) {
-    this.prefixParseFns[tokenLiteral] = f.bind(this);
+/*
+ * @params {string}     tokenType   - initial token type
+ * @params {function}   f           - process function
+ */
+Parser.prototype.registerReader = function(tokenType, f) {
+    this.prefixParseFns[tokenType] = f.bind(this);
+}
+
+/*
+ * @params {string}     tokenType   - initial token type
+ * @params {function}   f           - post process function
+ */
+Parser.prototype.registerProcessor = function(tokenType, f) {
+    this.postProcessFns[tokenType] = f.bind(this);
 }
 
 /*
@@ -72,9 +86,12 @@ Parser.prototype.registerTag = function(tagname, f) {
     this.tagFns[tagname] = f;
 }
 
-Parser.prototype.Parse = function() {
+Parser.prototype.Parse = function(depth=2) {
     let f;
     let text = '';
+    let startType = this.currentToken.Type;
+    let postprocess = this.postProcessFns[startType];
+
     while (this.currentToken.Type != tkn.EOF) {
         f = this.prefixParseFns[this.currentToken.Type];
         
@@ -86,6 +103,11 @@ Parser.prototype.Parse = function() {
 
         this.nextToken();
     }
+
+    if (depth === 2 && typeof postprocess === 'function') {
+        text = postprocess(text);
+    }
+
     return text;
 }
 
@@ -241,7 +263,7 @@ Parser.prototype.parsePipe = function() {
         let arr = tbl.header[0];
         head += '<thead><tr>';
         head += arr.map((c, idx) => {
-            return `<th${getAlignment(idx)}>${this._parse(this.escapeHTML(c))}</th>`;
+            return `<th${getAlignment(idx)}>${this._parse(this.escapeHTML(c), 0)}</th>`;
         }).join('');
         
         head += '</tr></thead>';
@@ -256,7 +278,7 @@ Parser.prototype.parsePipe = function() {
         for (let bRow of tbl.rows) {
             body += '<tr>';
             body += bRow.map((c, idx) =>{
-                return `<td${getAlignment(idx)}>${ this._parse( this.escapeHTML(c) )}</td>`
+                return `<td${getAlignment(idx)}>${ this._parse( this.escapeHTML(c), 0)}</td>`
             }).join('');
             body += '</tr>';
         }
@@ -282,38 +304,37 @@ Parser.prototype.parseGT = function() {
 
 
 Parser.prototype.parseBlockQuote = function(bq) {
-    let quotes = [];
-
-    // TODO : multi-line blockquote + test
-
+    let content = [];
+    
     while (this.currentToken.Literal === bq) {
-
-        switch(bq) {
-            case ">":
-                if (this.peekToken.Type === tkn.WSPACE) {
-                    this.nextToken();
-                }
-                this.nextToken(); //-> CONTENT
-                break;
-            default:
-                this.nextToken(); //-> CONTENT
-                break;
+        // collect 
+        this.nextToken();
+        if (this.currentToken.Type === tkn.WSPACE) {
+            this.nextToken();
         }
         
-        // start with a single case
-        let content = this.filter((token) => token.Type != tkn.EOL) || '';
-        quotes.push(this._parse(content));
+        content.push(this.filter((token) => token.Type != tkn.EOL) || '');
+        
         this.nextToken();
-        this.nextToken();
+        
+        if (this.currentToken.Type === tkn.EOL) {
+            this.nextToken();
+        }
     }
+
+    let innerText = content.join('\n');
+    let innerHTML = this._parse(innerText);
 
     let f = this.tagFns["blockquote"];
+
     if (typeof f === 'function') {
-        return f(quotes);
+        return f(innerHTML);
     }
 
+    return innerText;
+
     // no rewind ? 
-    return `> ${quotes.join('\n' + bq)}`;
+    //return `> ${quotes.join('\n' + bq)}`;
 }
 
 
@@ -519,7 +540,7 @@ Parser.prototype.parseHeader = function () {
         return `# ${this.currentToken.Literal}`;
     }
     
-    text = this._parse(text);
+    text = this._parse(text, 0);
 
     this.nextToken();
 
@@ -563,7 +584,7 @@ Parser.prototype.parseUnorderedList = function() {
 
     if (items.length > 0) {
         let ul = this.tagFns["ul"];
-        const resolved = items.map((item) => this._parse(item));
+        const resolved = items.map((item) => this._parse(item, 0));
         return ul(resolved);
     }
    
@@ -590,7 +611,7 @@ Parser.prototype.parseOrderedList = function() {
 
     if (items.length > 0) {
         let ol = this.tagFns["ol"];
-        const resolved = items.map((item) => this._parse(item));
+        const resolved = items.map((item) => this._parse(item, 0));
         return ol(resolved);
     }
     
@@ -610,12 +631,47 @@ Parser.prototype.parseEmphasis = function() {
     this.nextToken();
     let input = this.parseUntil(lit);
     if (this.currentToken.Literal === lit) {
-        innerText = this._parse(input);
+        innerText = this._parse(input, 0);
     } else {
         innerText = input;
     }
     
     return f({ text: innerText });
+}
+
+Parser.prototype.wrapParagraphs = function(text) {
+    let result = '<p>';
+
+    let eols = 0;
+    let lines = text.replaceAll('\r', '\n').split('\n');
+
+    for (let line of lines) {
+        if (line.length === 0) {
+            eols++;
+        } else {
+
+            if (eols === 1) {
+                result += '<br>';
+                eols = 0;
+            } else if (eols > 1) {
+                // trailing whitespace === separation of paragraphs
+                result += '</p><p>';
+                eols = 0;
+            }
+
+            result += line;
+        }
+    }
+
+    if (result.endsWith('</p><p>')) {
+        result = result.slice(0, -3);
+    }
+
+    if (!result.endsWith('</p>')) {
+        result += '</p>';
+    }
+
+    return result; 
 }
 
 module.exports = Parser;
