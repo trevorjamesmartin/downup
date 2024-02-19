@@ -1,4 +1,34 @@
 module.exports = {
+    table: ({header, rows, alignment}) => {
+        let html = '<table>';
+        if (header.length > 0 && header[0].length > 0) {
+            let hd = header.shift();
+            html += '<thead><tr>';
+            let idx = 0;
+            for (let item of hd) {
+                let aln = alignment[idx] ? ` style="text-align: ${alignment[idx]};" ` : '';
+                html += `<th${aln}>${item}</th>`;
+                idx++
+            }
+            html += '</tr></thead>';
+        }
+        if (rows.length > 0) {
+            html +=  '<tbody>';
+            for (let row of rows) {
+                html += '<tr>';
+                let idx = 0;
+                for (let item of row) {
+                    let aln = alignment[idx] ? ` style="text-align: ${alignment[idx]};" ` : '';
+                    html += `<td${aln}>${item}</td>`;
+                    idx++;
+                }
+                html += '</tr>';
+            }
+            html += '</tbody>';
+        }
+        html += '</table>';
+        return html + '\n';
+    },
     h1: ({text}) => `<h1>${text}</h1>\n`,
     h2: ({text}) => `<h2>${text}</h2>\n`,
     h3: ({text}) => `<h3>${text}</h3>\n`,

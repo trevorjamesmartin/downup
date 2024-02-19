@@ -1,22 +1,24 @@
 const tkn = require('./token.js');
 
+const Mobject = require('./mobject.js');
+
 const Lexer = require('./lexer.js');
 
 const defaultTags = require('./defaultTags.js');
-
 
 class Parser {
 
     constructor(lexer, customTags={}) {
         this.errors = [];
         this.lex = lexer;
+        this.formatOut = 'html';
         this.currentToken = undefined;
         this.peekToken = undefined;
         this.nextToken(); // currentToken
         this.nextToken(); // peekToken
         
         this.prefixParseFns = {};
-        this.postProcessFns = {};
+        this.postProcessFns = [];
 
         //  customize your markup elementd(s)
         this.tagFns = {...defaultTags, ...customTags};
@@ -46,16 +48,44 @@ class Parser {
         this.registerReader(tkn.PIPE, this.parsePipe);
 
         // @note: adding the paragraph tag(s) after processing
-        this.registerProcessor(tkn.CONTENT, this.wrapParagraphs)
+        this.registerProcessor(this.wrapParagraphs)
     };
 
-    _parse(text, pass=1) {
+    // @param {string} format - mobject function name returning the result
+    setFormat(format) {
+        this.formatOut = format;
+    }
+
+    _unwrap(obj) {
+        let res, keys;
+
+        switch (typeof obj) {
+            case 'object':
+                if (typeof obj[this.formatOut] === 'function') {
+                    res = obj[this.formatOut]();
+                } else {
+                    throw new Error(`expected function named ${this.formatOut}, got=${typeof obj[this.formatOut]}`);
+                    res = "";
+                }
+                break;
+
+            case 'string':
+            default:
+                res = obj;
+                break;
+        }
+        return res
+    }
+
+    _parse(text, depth=0) {
         if (!this.tagFns) {
             return
         }
         let tagFns = {...this.tagFns}; 
         let p = new Parser(new Lexer(text, tagFns));
-        return p.Parse(pass);
+        p.setFormat(this.formatOut);
+        let result = p.Parse(depth);
+        return this._unwrap(result);
     }
 }
 
@@ -68,11 +98,10 @@ Parser.prototype.registerReader = function(tokenType, f) {
 }
 
 /*
- * @params {string}     tokenType   - initial token type
  * @params {function}   f           - post process function
  */
-Parser.prototype.registerProcessor = function(tokenType, f) {
-    this.postProcessFns[tokenType] = f.bind(this);
+Parser.prototype.registerProcessor = function(f) {
+    this.postProcessFns.push(f.bind(this));
 }
 
 /*
@@ -90,13 +119,12 @@ Parser.prototype.Parse = function(depth=2) {
     let f;
     let text = '';
     let startType = this.currentToken.Type;
-    let postprocess = this.postProcessFns[startType];
 
     while (this.currentToken.Type != tkn.EOF) {
         f = this.prefixParseFns[this.currentToken.Type];
         
         if (typeof f === 'function') {
-            text += f();
+            text += this._unwrap(f());
         } else {
             text += this.currentToken.Literal;
         }
@@ -104,8 +132,12 @@ Parser.prototype.Parse = function(depth=2) {
         this.nextToken();
     }
 
-    if (depth === 2 && typeof postprocess === 'function') {
-        text = postprocess(text);
+    if (depth === 2) {
+        for (let ppf of this.postProcessFns) {
+            if (typeof ppf === 'function') {
+                text = ppf(this._unwrap(text));
+            }
+        }
     }
 
     return text;
@@ -197,21 +229,23 @@ Parser.prototype.parseBacktick = function() {
     this.nextToken();
     let code = this.parseUntil(lit) || '';
     
-    let plaintext = this.escapeHTML(code);
+    let text = this.escapeHTML(code);
 
     let wrapper = this.tagFns[lit] || this.tagFns["```"];
 
-    return wrapper(plaintext);
+    return wrapper({ text });
 }
 
 // todo : extract table logic into this.tagFns["table"]
 Parser.prototype.parsePipe = function() {
     let row, cols, headers;
-    let tbl = {header:[], rows:[]};
-    let alignment = [];
-
+    let tbl = {header:[], rows:[], alignment:[]};
+    let orig = [];
+    
     while (this.currentToken.Literal === '|') {
         row = this.filter((toke) => toke.Type !== tkn.EOL) || '';
+        orig.push(row);
+        orig.push('\n');
         this.nextToken();
         this.nextToken();
         headers = 0;
@@ -225,12 +259,12 @@ Parser.prototype.parsePipe = function() {
                     case "---":
                         headers++;
                         align = value.endsWith(":") ? "right" : "";
-                        alignment.push(align);
+                        tbl.alignment.push(align);
                         break;
                     case ":--":
                         headers++;
                         align = value.endsWith(":") ? "center" : "left";
-                        alignment.push(align);
+                        tbl.alignment.push(align);
                         break;
                     default:
                         break;
@@ -249,45 +283,17 @@ Parser.prototype.parsePipe = function() {
         headers = 0;
     }
 
-    let head = '';
+    let obj = { markdown: () => [...orig].join('') }
 
-    function getAlignment(idx) {
-        let aln = alignment[idx] || "";
-        if (aln.length > 0) {
-            aln = ` style="text-align: ${alignment[idx]};" `
-        }
-        return aln;
+    let f = this.tagFns['table'];
+
+    if (typeof f === 'function') {
+        obj = { ...obj, html: () => f(tbl) }
+    } else {
+        obj = { ...obj, html: () => JSON.stringify(tbl) }
     }
 
-    if (tbl.header.length > 0) {
-        let arr = tbl.header[0];
-        head += '<thead><tr>';
-        head += arr.map((c, idx) => {
-            return `<th${getAlignment(idx)}>${this._parse(this.escapeHTML(c), 0)}</th>`;
-        }).join('');
-        
-        head += '</tr></thead>';
-    }
-
-    let body = '';
-
-    if (tbl.rows.length > 0) {
-        
-        body += '<tbody>';
-
-        for (let bRow of tbl.rows) {
-            body += '<tr>';
-            body += bRow.map((c, idx) =>{
-                return `<td${getAlignment(idx)}>${ this._parse( this.escapeHTML(c), 0)}</td>`
-            }).join('');
-            body += '</tr>';
-        }
-        body += '</tbody>';
-    }
-
-    let result = `<table>${head}${body}</table>`;
-
-    return result;
+    return new Mobject("table", obj);
 }
 
 Parser.prototype.parseGT = function() {
@@ -380,7 +386,7 @@ Parser.prototype.filter = function(f) {
     return literal;
 }
 
-
+// @returns Mobject
 Parser.prototype.parseLinkToResource = function() { 
     let text = this.parseBetween(tkn.LBRACE, tkn.RBRACE);
 
@@ -401,14 +407,21 @@ Parser.prototype.parseLinkToResource = function() {
     }
 
     if (href[0] === tkn.LPAREN) {
-        return text + href;
+        // not a link, re-wrap
+        return `[${text}]${href}`;
     }
 
     if (typeof this.tagFns["a"] === 'function') {
-        return this.tagFns["a"]({href, text});
+        return new Mobject("a", { 
+            html: () => this.tagFns["a"]({href, text}),
+            markdown: () => `[${text}](${href})`
+        });
     }
 
-    return `<a href="${href}">${text}</a>`;
+    return new Mobject("a", {
+        html: () => `<a href="${href}">${text}</a>`,
+        Markdown: () => `[${text}](${href})`
+        });
 }
 
 Parser.prototype.parseMinus = function() {
@@ -640,38 +653,63 @@ Parser.prototype.parseEmphasis = function() {
 }
 
 Parser.prototype.wrapParagraphs = function(text) {
-    let result = '<p>';
+    if (this.formatOut !== 'html') {
+        console.log(this.formatOut);
+        return text; 
+    }
+    let result = [];
+    let inParagraph = false;
 
     let eols = 0;
-    let lines = text.replaceAll('\r', '\n').split('\n');
+    let lines = [...text.replaceAll('\r', '\n').split('\n')];
+    //console.log(lines);
 
     for (let line of lines) {
-        if (line.length === 0) {
-            eols++;
-        } else {
+        
 
-            if (eols === 1) {
-                result += '<br>';
+        switch(line[0]) {
+            case tkn.LT:
+                // element
+                if (inParagraph) {
+                    result.push('</p>');
+                    inParagraph = false;
+                }
+                result.push(line);
                 eols = 0;
-            } else if (eols > 1) {
-                // trailing whitespace === separation of paragraphs
-                result += '</p><p>';
-                eols = 0;
-            }
+                break;
+                
+            case undefined:
+                // blank line
+                eols++;
+                break;
 
-            result += line;
+            default:
+                
+                if (eols > 1 && inParagraph) {
+                    result.push('</p>');
+                    eols = 0;
+                    inParagraph = false;
+                }
+
+                if (!inParagraph) {
+                    result.push('<p>');
+                    inParagraph = true;
+                }
+
+                if (eols) {
+                    result.push('<br>');
+                }
+
+                result.push(line);
         }
     }
 
-    if (result.endsWith('</p><p>')) {
-        result = result.slice(0, -3);
+    if (inParagraph) {
+        result.push('</p>');
     }
-
-    if (!result.endsWith('</p>')) {
-        result += '</p>';
-    }
-
-    return result; 
+    //console.log(result);
+    
+    return result.join('\n'); 
 }
 
 module.exports = Parser;

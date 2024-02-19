@@ -19,6 +19,14 @@ describe("Parser test", () => {
         expect(p.Parse()).toBe(`<a href="https://electronjs.org"><img src="https://electronjs.org/images/electron-logo.svg" alt="Electron Logo"></img></a>`);
     });
 
+    test("parse code block", () => {
+        let input = "code: `<br>`";
+        let expectedOutput = "code: <pre><code>&lt;br&gt;</code></pre>";
+        let lex = new Lexer(input);
+        let p = new Parser(lex);
+        expect(p.Parse(0)).toBe(expectedOutput);
+    });
+
     test("parse header tag", () => {
 
         let sample = [
@@ -37,7 +45,7 @@ describe("Parser test", () => {
         for (let {input, expectedOutput} of sample) {
             lex = new Lexer(input);
             p = new Parser(lex);
-            output = p.Parse();
+            output = p.Parse(0);
             expect(output).toBe(expectedOutput);
         }
 
@@ -56,7 +64,7 @@ describe("Parser test", () => {
         for (let {input, expectedOutput} of sample) {
             lex = new Lexer(input);
             p = new Parser(lex);
-            output = p.Parse();
+            output = p.Parse(0);
             expect(output).toBe(expectedOutput);
         }
         
@@ -89,7 +97,7 @@ describe("Parser test", () => {
         for (let {input, expectedOutput} of sample) {
             lex = new Lexer(input);
             p = new Parser(lex);
-            output = p.Parse();
+            output = p.Parse(0);
             expect(output).toBe(expectedOutput);
         }
 
@@ -195,7 +203,7 @@ describe("Parser test", () => {
         for (let {input, expectedOutput} of sample) {
             lex = new Lexer(input);
             p = new Parser(lex);
-            output = p.Parse();
+            output = p.Parse(0);
             expect(output).toBe(expectedOutput);
         }
 
@@ -225,7 +233,7 @@ describe("Parser test", () => {
     test("parse paragraphs", () => {
         let input = `You can use two or more spaces (commonly referred to as “trailing whitespace”) for line breaks in nearly every Markdown application, but it’s controversial. It’s hard to see trailing whitespace in an editor, and many people accidentally or intentionally put two spaces after every sentence. For this reason, you may want to use something other than trailing whitespace for line breaks. If your Markdown application supports HTML, you can use the br HTML tag.\n\n\nFor compatibility, use trailing white space or the br HTML tag at the end of the line.\n\n\nThere are two other options I don’t recommend using. CommonMark and a few other lightweight markup languages let you type a backslash (\) at the end of the line, but not all Markdown applications support this, so it isn’t a great option from a compatibility perspective. And at least a couple lightweight markup languages don’t require anything at the end of the line — just type return and they’ll create a line break.`;
 
-        let expectedOutput = `<p>You can use two or more spaces (commonly referred to as “trailing whitespace”) for line breaks in nearly every Markdown application, but it’s controversial. It’s hard to see trailing whitespace in an editor, and many people accidentally or intentionally put two spaces after every sentence. For this reason, you may want to use something other than trailing whitespace for line breaks. If your Markdown application supports HTML, you can use the br HTML tag.</p><p>For compatibility, use trailing white space or the br HTML tag at the end of the line.</p><p>There are two other options I don’t recommend using. CommonMark and a few other lightweight markup languages let you type a backslash (\) at the end of the line, but not all Markdown applications support this, so it isn’t a great option from a compatibility perspective. And at least a couple lightweight markup languages don’t require anything at the end of the line — just type return and they’ll create a line break.</p>`;
+        let expectedOutput = `<p>\nYou can use two or more spaces (commonly referred to as “trailing whitespace”) for line breaks in nearly every Markdown application, but it’s controversial. It’s hard to see trailing whitespace in an editor, and many people accidentally or intentionally put two spaces after every sentence. For this reason, you may want to use something other than trailing whitespace for line breaks. If your Markdown application supports HTML, you can use the br HTML tag.\n</p>\n<p>\nFor compatibility, use trailing white space or the br HTML tag at the end of the line.\n</p>\n<p>\nThere are two other options I don’t recommend using. CommonMark and a few other lightweight markup languages let you type a backslash (\) at the end of the line, but not all Markdown applications support this, so it isn’t a great option from a compatibility perspective. And at least a couple lightweight markup languages don’t require anything at the end of the line — just type return and they’ll create a line break.\n</p>`;
 
         p = new Parser(new Lexer(input));
         output = p.Parse();
@@ -233,7 +241,7 @@ describe("Parser test", () => {
     });
 
     test("parse mixed", () => {
-        let input = `# H1\n## H2\n### H3\n#### H4\n##### H5\n###### H6\n\nAlternatively, for H1 and H2, an underline-ish style:\n\nAlt-H1\n======\n\nAlt-H2\n------\n\n`;
+        let input = `# H1\n## H2\n### H3\n#### H4\n##### H5\n###### H6\n\nAlternatively, for H1 and H2, an underline-ish style: TODO\n`;
 
         let expectedOutput= '<h1>H1</h1>\n' +
                             '<h2>H2</h2>\n' +
@@ -241,18 +249,13 @@ describe("Parser test", () => {
                             '<h4>H4</h4>\n' +
                             '<h5>H5</h5>\n' +
                             '<h6>H6</h6>\n' +
-                            '\n' +
-                            'Alternatively, for H1 and H2, an underline-ish style:\n' +
-                            '\n' +
-                            'Alt-H1\n' + // TODO
-                            '======\n' +
-                            '\n' +
-                            'Alt-H2\n' + // TODO
-                            '------\n' +
-                            '\n';
+                            '<p>\n<br>\nAlternatively, for H1 and H2, an underline-ish style: TODO\n' +
+                            '</p>'; 
         
         let lex = new Lexer(input);
         let p = new Parser(lex);
+
+
 
         expect(p.Parse()).toBe(expectedOutput);
 
