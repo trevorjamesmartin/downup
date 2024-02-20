@@ -20,8 +20,10 @@ const WSPACE        = "WSPACE";
 const HEADING       = "HEADING";
 const EOF           = "EOF";
 const EOL           = "EOL";
-
+const ESCAPED       = "ESCAPED";
 const NUMBER        = "NUMBER";
+
+const BACKSLASH     = "\\";
 
 const TABS          = "\t";
 const NEW_LINE      = "\n";
@@ -89,7 +91,7 @@ module.exports = {
     EOL,
     EOF,
     HEADING,
-
+    ESCAPED,
     NUMBER,
 
     TABS,
@@ -119,5 +121,6 @@ module.exports = {
     UNDERSCORE,
     PERIOD,
     BACKTICK,
-    PIPE
+    BACKSLASH,
+    PIPE,
 }

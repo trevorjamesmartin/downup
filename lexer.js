@@ -86,7 +86,7 @@ Lexer.prototype.NextToken = function() {
         '!', ' ', '\n', '\r', '\t', 
         '[', ']', '(', ')', '{', '}', 
         '"', "'", "`", "*", "_", "~",
-        ".", ">", "`", "|",
+        ".", ">", "`", "|", '\\',
         0];
 
     switch (this.ch) {
@@ -173,6 +173,13 @@ Lexer.prototype.NextToken = function() {
         case "|":
             literal = this.filter((ch) => ch === "|");
             token = new Token(tkn.PIPE, literal);
+            break;
+
+        case "\\":
+            literal = this.ch;
+            this.readChar();
+            literal += this.ch;
+            token = new Token(tkn.ESCAPED, literal);
             break;
 
         default:

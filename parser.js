@@ -47,6 +47,7 @@ class Parser {
         
         this.registerReader(tkn.PIPE, this.parsePipe);
 
+        this.registerReader(tkn.ESCAPED, this.parseEscapedChar);
         // @note: adding the paragraph tag(s) after processing
         this.registerProcessor(this.wrapParagraphs)
     };
@@ -650,6 +651,11 @@ Parser.prototype.parseEmphasis = function() {
     }
     
     return f({ text: innerText });
+}
+
+Parser.prototype.parseEscapedChar = function() {
+    let lit  = this.currentToken.Literal;
+    return this.escapeHTML(lit.slice(1)); 
 }
 
 Parser.prototype.wrapParagraphs = function(text) {
