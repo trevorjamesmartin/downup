@@ -339,9 +339,6 @@ Parser.prototype.parseBlockQuote = function(bq) {
     }
 
     return innerText;
-
-    // no rewind ? 
-    //return `> ${quotes.join('\n' + bq)}`;
 }
 
 
@@ -559,13 +556,10 @@ Parser.prototype.parseHeader = function () {
     this.nextToken();
 
     if (typeof this.tagFns[tag] === 'function') {
-        // return your flavor
         return this.tagFns[tag]({text});
     }
 
     return text;
-    // return vanilla HTML
-    //return `<${tag}>${text}</${tag}>\n`;
 }
 
 
@@ -658,6 +652,13 @@ Parser.prototype.parseEscapedChar = function() {
     return this.escapeHTML(lit.slice(1)); 
 }
 
+Parser.prototype.readElementName = function(text) {
+    // identify first tag in text
+    let start = text.indexOf('<');
+    let end = text.indexOf('>');
+    return text.substring(start + 1, end);
+}
+
 Parser.prototype.wrapParagraphs = function(text) {
     if (this.formatOut !== 'html') {
         console.log(this.formatOut);
@@ -665,56 +666,75 @@ Parser.prototype.wrapParagraphs = function(text) {
     }
     let result = [];
     let inParagraph = false;
-
+    let skipProcess = false;
     let eols = 0;
+    
     let lines = [...text.replaceAll('\r', '\n').split('\n')];
-    //console.log(lines);
-
+    let inElement;
+    
     for (let line of lines) {
-        
-
-        switch(line[0]) {
-            case tkn.LT:
-                // element
-                if (inParagraph) {
-                    result.push('</p>');
-                    inParagraph = false;
-                }
+               
+        if (inElement) {
+            // check for the closing tag
+            let s = (line.indexOf(inElement) -1) || 0;
+            if (line.substring(s).startsWith(`/${inElement}>`)) {
+                skipProcess = true;
+                inElement = null;
                 result.push(line);
-                eols = 0;
-                break;
-                
-            case undefined:
-                // blank line
-                eols++;
-                break;
-
-            default:
-                
-                if (eols > 1 && inParagraph) {
-                    result.push('</p>');
-                    eols = 0;
-                    inParagraph = false;
-                }
-
-                if (!inParagraph) {
-                    result.push('<p>');
-                    inParagraph = true;
-                }
-
-                if (eols) {
-                    result.push('<br>');
-                }
-
-                result.push(line);
+            }
         }
+
+        if (!skipProcess) {
+            switch(line[0]) {
+                case tkn.LT:
+                    // element
+                    if (inParagraph) {
+                        result.push('</p>');
+                        inParagraph = false;
+                    }
+                    result.push(line);
+                    inElement = this.readElementName(line);
+                    if (line.includes(`</${inElement}>`)) {
+                        inElement = null;
+                    }
+                    eols = 0;
+                    break;
+                    
+                case undefined:
+                    // blank line
+                    eols++;
+                    break;
+
+                default:
+                    
+                    if (eols > 1 && inParagraph) {
+                        result.push('</p>');
+                        eols = 0;
+                        inParagraph = false;
+                    }
+
+                    if (!inParagraph) {
+                        result.push('<p>');
+                        inParagraph = true;
+                    }
+
+                    if (eols) {
+                        result.push('<br>');
+                    }
+
+                    result.push(line);
+            }
+        }
+
+    
+        skipProcess = false;
     }
 
     if (inParagraph) {
+        // close the paragraph if we haven't done so
         result.push('</p>');
     }
-    //console.log(result);
-    
+
     return result.join('\n'); 
 }
 
