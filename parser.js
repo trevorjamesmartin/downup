@@ -716,16 +716,15 @@ Parser.prototype.wrapParagraphs = function(text) {
                     if (!inParagraph) {
                         result.push('<p>');
                         inParagraph = true;
-                    }
-
-                    if (eols) {
-                        result.push('<br>');
+                    } else {
+                        for (let i = 0; i <= eols; i++) {
+                            result.push('<br>');
+                        }
                     }
 
                     result.push(line);
             }
         }
-
     
         skipProcess = false;
     }

@@ -266,7 +266,7 @@ describe("Parser test", () => {
                             '<h4>H4</h4>\n' +
                             '<h5>H5</h5>\n' +
                             '<h6>H6</h6>\n' +
-                            '<p>\n<br>\nAlternatively, for H1 and H2, an underline-ish style: TODO\n' +
+                            '<p>\nAlternatively, for H1 and H2, an underline-ish style: TODO\n' +
                             '</p>'; 
         
         let lex = new Lexer(input);
