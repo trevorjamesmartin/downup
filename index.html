@@ -7,17 +7,12 @@
 </head>
 <body>
     <script type="module">
-
-        import downup from "/vendor.mjs";
+        const { default: downup } = await import("/vendor.mjs");
         
-        const {Lexer, Parser} = downup;
-
-        function bam() {
-            
-            const input = document.querySelector('#markdown-text').value;
-            const output = document.querySelector('#markup-text');
-
-            output.innerHTML = (new Parser(new Lexer(input))).Parse();
+        const updatePage = () => {
+            let down = document.querySelector('#markdown-text').value;
+            let up = new downup.Parser(new downup.Lexer(down)).Parse();
+            document.querySelector('#markup-text').innerHTML = up;
         }
 
         function debounce(f, timeout=420) {
@@ -27,11 +22,8 @@
                 timer = setTimeout(() => f.apply(this, params), timeout);
             };
         }
-
-        const process = debounce(() => bam());
-
-        globalThis.downup = {process, bam};
-
+        
+        globalThis.downup = { process: debounce(() => updatePage()) };
     </script>
 
     <div id="downup-wrapper">
@@ -81,20 +73,7 @@
           text-align: left;
         }
 
-        
-        @media (prefers-color-scheme: light) {
-          thead {
-            color: black;
-            background-color: grey;
-          }
-        }
 
-        @media (prefers-color-scheme: dark) {
-          thead {
-            color: white;
-            background-color: #3b3b3b;
-          }
-        }
     </style>
 </body>
 </html>
