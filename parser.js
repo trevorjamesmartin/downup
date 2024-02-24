@@ -24,32 +24,26 @@ class Parser {
         this.tagFns = {...defaultTags, ...customTags};
 
         // readers
-        this.registerReader(tkn.LBRACE, this.parseLinkToResource);  // <a href...
-
-        this.registerReader(tkn.HEADING, this.parseHeader);         // <hr>, <h{0-6}>
-
-        this.registerReader(tkn.BANG, this.parseBanger);            // <img...
-
-        this.registerReader(tkn.MINUS, this.parseMinus);
- 
-        this.registerReader(tkn.PLUS, this.parsePlus);
-        this.registerReader(tkn.ASTERISK, this.parseAsterisk);
-        this.registerReader(tkn.NUMBER, this.parseNumber);
-        
-        this.registerReader(tkn.UNDERSCORE, this.parseUnderscore);
-        this.registerReader(tkn.TILDE, this.parseTilde);
-
-        this.registerReader(tkn.PERIOD, this.parsePeriod);
-
-        this.registerReader(tkn.GT, this.parseGT);
-
-        this.registerReader(tkn.BACKTICK, this.parseBacktick);
-        
-        this.registerReader(tkn.PIPE, this.parsePipe);
-
-        this.registerReader(tkn.ESCAPED, this.parseEscapedChar);
+        for (let [token, reader]  of [
+            [tkn.LBRACE, this.parseLinkToResource],
+            [tkn.HEADING, this.parseHeader],
+            [tkn.BANG, this.parseBanger],        
+            [tkn.MINUS, this.parseMinus],
+            [tkn.PLUS, this.parsePlus],
+            [tkn.ASTERISK, this.parseAsterisk],
+            [tkn.NUMBER, this.parseNumber],
+            [tkn.UNDERSCORE, this.parseUnderscore],
+            [tkn.TILDE, this.parseTilde],
+            [tkn.PERIOD, this.parsePeriod],
+            [tkn.GT, this.parseGT],
+            [tkn.BACKTICK, this.parseBacktick],
+            [tkn.PIPE, this.parsePipe],
+            [tkn.ESCAPED, this.parseEscapedChar],
+        ]) {
+            this.registerReader(token, reader);
+        };
         // @note: adding the paragraph tag(s) after processing
-        this.registerProcessor(this.wrapParagraphs)
+        this.registerProcessor(this.wrapParagraphs);
     };
 
     // @param {string} format - mobject function name returning the result

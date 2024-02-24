@@ -6,7 +6,7 @@ zero dependency markdown parsing
 
 The practical use of markdown as intermediary language bewteen client and application to prevent malicious code from reaching critical systems can be readily observed on most modern distributed version control systems. Given the right context, its a pattern worth repeating. 
 
-_Fork the repo if you digested that description and wholeheartedly agree._
+_feel free to fork the repo_
 
 ## Getting Started
 
@@ -15,15 +15,40 @@ _Fork the repo if you digested that description and wholeheartedly agree._
 
 Download or clone the repo
 
+`git clone https://github.com/trevorjamesmartin/downup.git`
+
 Build the ECMAScript module
 
-_(generates a file named './vendor.mjs')_
-```
-    cd ./downup
-    npm install
-    npm build
-```
+`cd ./downup
+npm install
+npm build`
+this generates a file named './vendor.mjs'
 
 ## Usage
 
-Take a look at [index.html](index.html) 
+in the example from [index.html](./index.html),
+
+_import the ECMAScript module_
+
+`const { default: downup } = await import("/vendor.mjs");`
+
+_write your wrapper function_
+`function toHTML(markdown) {
+    let lexer = new downup.Lexer(markdown);
+    let parser = new downup.Parser(lexer);
+    let html = parser.Parse();
+    return html;
+}
+console.log("# Hello dragon");
+// <h1>Hello dragon</h1>`
+
+
+_(optional)_ override the [default tag functions](./defaultTags.js)
+`    ...
+    let parser = new downup.Parser(lexer, {
+        h1:({text}) => bespokeHeadline(text),
+        h2:({text}) => bespokeSubtitle(text),
+    });
+    ...`
+#
+
