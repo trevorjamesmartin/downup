@@ -26,29 +26,40 @@ this generates a file named './vendor.mjs'
 
 ## Usage
 
-in the example from [index.html](./index.html),
-
 _import the ECMAScript module_
 
 `const { default: downup } = await import("/vendor.mjs");`
 
 _write your wrapper function_
-`function toHTML(markdown) {
+
+```function toHTML(markdown) {
     let lexer = new downup.Lexer(markdown);
     let parser = new downup.Parser(lexer);
     let html = parser.Parse();
     return html;
 }
-console.log("# Hello dragon");
-// <h1>Hello dragon</h1>`
 
+let input = "# Hello dragon";
 
-_(optional)_ override the [default tag functions](./defaultTags.js)
-`    ...
+console.log(input);
+// # Hello dragon
+
+console.log(toHTML(input));
+// <h1>Hello dragon</h1>
+```
+#
+
+_(optional)_ to override the default tags
+```
+    ...
     let parser = new downup.Parser(lexer, {
         h1:({text}) => bespokeHeadline(text),
         h2:({text}) => bespokeSubtitle(text),
     });
-    ...`
-#
+    ...
+```
+
+for the input parameters expected, see [defaultTags.js](./defaultTags.js)
+at the most basic level, your replacement should return a string
+
 
