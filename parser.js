@@ -25,6 +25,7 @@ class Parser {
 
         // readers
         for (let [token, reader]  of [
+            [tkn.WSPACE, this.parseWhitespace],
             [tkn.LBRACE, this.parseLinkToResource],
             [tkn.HEADING, this.parseHeader],
             [tkn.BANG, this.parseBanger],        
@@ -219,6 +220,39 @@ Parser.prototype.escapeHTML = function(code) {
     return browserSafe;
 }
 
+Parser.prototype.parseWhitespace = function() {
+    let wspace = this.filter((tk) => tk.Type === tkn.WSPACE);
+    let text = wspace;
+    if (wspace.length > 3 || wspace.includes('\t')) {
+        text = this.parseCodeBlock(wspace);
+        return this.tagFns.codeblock({ text });
+    }
+    return text;
+}
+
+Parser.prototype.isCodeBlock = function() {
+    let {Type: t, Literal: wspace} = this.currentToken;
+    return t === tkn.WSPACE &&
+                 wspace.length > 3 ||
+                 wspace.includes('\t');
+}
+
+Parser.prototype.parseCodeBlock = function() {
+    let cb = '';
+    let newline = true;
+    let start = this.currentToken;
+    for (let t = start; newline && this.isCodeBlock(); this.nextToken()) {
+        this.nextToken();
+        let line = this.filter((toke) => toke.Type !== tkn.EOL);
+        cb += this.escapeHTML(line);
+        this.nextToken();
+        newline = (this.currentToken.Type === tkn.EOL);
+        // add newline char
+        cb += newline ? this.currentToken.Literal : "";
+    }
+    return cb;
+}
+
 Parser.prototype.parseBacktick = function() {
     let lit = this.currentToken.Literal;
     this.nextToken();
@@ -226,7 +260,7 @@ Parser.prototype.parseBacktick = function() {
     
     let text = this.escapeHTML(code);
 
-    let wrapper = this.tagFns[lit] || this.tagFns["```"];
+    let wrapper = this.tagFns[lit] || this.tagFns.codeblock;
 
     return wrapper({ text });
 }
@@ -358,6 +392,10 @@ Parser.prototype.continues = function() {
     return this.peekToken.Type !== tkn.EOF;
 }
 
+Parser.prototype.lineContinues = function() {
+    return this.peekToken.Type !== tkn.EOL;
+}
+
 
 Parser.prototype.filter = function(f) {
     if (!f(this.currentToken)) {
@@ -368,7 +406,7 @@ Parser.prototype.filter = function(f) {
 
     for (let ok = this.continues(); ok && f(this.peekToken); this.nextToken()) {
         literal += this.currentToken.Literal;
-        ok = this.continues(); 
+        ok = this.continues();
     }
 
     if (f(this.currentToken)) {
@@ -658,6 +696,7 @@ Parser.prototype.wrapParagraphs = function(text) {
         console.log(this.formatOut);
         return text; 
     }
+    let codeblock = false;
     let result = [];
     let inParagraph = false;
     let skipProcess = false;
@@ -665,31 +704,62 @@ Parser.prototype.wrapParagraphs = function(text) {
     
     let lines = [...text.replaceAll('\r', '\n').split('\n')];
     let inElement;
+
+    function wrap() {
+        if (eols > 1 && inParagraph) {
+            result.push('</p>');
+            eols = 0;
+            inParagraph = false;
+        }
+
+        if (!inParagraph) {
+            result.push('<p>');
+            inParagraph = true;
+        } else {
+            for (let i = 0; i <= eols; i++) {
+                result.push('<br>');
+            }
+        }
+    }
     
     for (let line of lines) {
-               
+        
         if (inElement) {
-            // check for the closing tag
+            // check for the closing tag(s)
             let s = (line.indexOf(inElement) -1) || 0;
+            
             if (line.substring(s).startsWith(`/${inElement}>`)) {
                 skipProcess = true;
                 inElement = null;
                 result.push(line);
             }
+
+            if (line.includes("</code></pre>")) {
+                codeblock = false;
+            }
+
         }
 
         if (!skipProcess) {
             switch(line[0]) {
                 case tkn.LT:
                     // element
-                    if (inParagraph) {
+                    inElement = this.readElementName(line);
+                    if (inElement === 'pre') {
+                        codeblock = true;
+                    }
+                    if (!codeblock && inParagraph) {
+                        // end paragraph before starting new tag
                         result.push('</p>');
                         inParagraph = false;
                     }
                     result.push(line);
-                    inElement = this.readElementName(line);
+
                     if (line.includes(`</${inElement}>`)) {
                         inElement = null;
+                        if (inElement === 'pre') {
+                            codeblock = false;
+                        }
                     }
                     eols = 0;
                     break;
@@ -700,22 +770,9 @@ Parser.prototype.wrapParagraphs = function(text) {
                     break;
 
                 default:
-                    
-                    if (eols > 1 && inParagraph) {
-                        result.push('</p>');
-                        eols = 0;
-                        inParagraph = false;
+                    if (!codeblock) {
+                        wrap();
                     }
-
-                    if (!inParagraph) {
-                        result.push('<p>');
-                        inParagraph = true;
-                    } else {
-                        for (let i = 0; i <= eols; i++) {
-                            result.push('<br>');
-                        }
-                    }
-
                     result.push(line);
             }
         }
