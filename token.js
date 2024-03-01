@@ -67,7 +67,7 @@ var keywords = {
     ' ': WSPACE,
     '\r': EOL,
     '\n': EOL,
-    '\t': TABS,
+    '\t': WSPACE,
 };
 
 function Lookup(text) {

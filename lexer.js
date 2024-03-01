@@ -102,7 +102,7 @@ Lexer.prototype.NextToken = function() {
 
         case '\t':
             literal = this.filter((ch) => ch === '\t');
-            token = new Token(tkn.TABS, literal);
+            token = new Token(tkn.WSPACE, literal);
             break;
 
         case '\n':
