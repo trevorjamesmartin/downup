@@ -57,7 +57,7 @@ module.exports = {
 
     blockquote: (html) => `<blockquote>${html}</blockquote>`,
     
-    "```": ({text}) => `<pre><code>${text}</code></pre>`,
+    codeblock: ({text}) => `<pre><code>${text}</code></pre>`,
 
 
 };
