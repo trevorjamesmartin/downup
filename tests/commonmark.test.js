@@ -28,6 +28,16 @@ describe("commonmark", () => {
             {
                 input: `    a	a\n    ὐ	a\n`, 
                 expected: `<pre><code>a\ta\nὐ\ta\n</code></pre>`
+            },
+            {
+                input: `- foo\n\n\t\tbar\n`,
+                expected: `<ul><li>foo</li></ul><pre><code>bar\n</code></pre>`
+                // @note : I'm not wrapping list-item content in paragraphs
+            },
+            {
+                input: `- foo\n\t\tbar\n`,
+                // @todo : preserve whitespace inside codeblock
+                expected: "<ul><li>foo\n<pre><code>bar</code></pre></li></ul>"
             }
         ];
 
@@ -36,7 +46,7 @@ describe("commonmark", () => {
             let lexer = new Lexer(input);
             let parser = new Parser(lexer);
             let output = parser.Parse();
-            console.log(output);
+            //console.log(output);
             expect(output).toBe(expected);
         }
 

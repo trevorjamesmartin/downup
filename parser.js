@@ -612,6 +612,7 @@ Parser.prototype.parseUnorderedList = function() {
     let wspace = this.peekToken.Type;
     let bullets = [tkn.MINUS, tkn.PLUS, tkn.ASTERISK];
     let items =[];
+
     while (wspace === tkn.WSPACE && bullets.includes(b)) {
         this.nextToken(); // -
         this.nextToken(); // ' '
@@ -620,6 +621,13 @@ Parser.prototype.parseUnorderedList = function() {
         this.nextToken() // -
         b = this.currentToken.Literal;
         wspace = this.peekToken.Type;
+        while ([tkn.WSPACE, tkn.CONTENT].includes(this.currentToken.Type)){
+            let b = this.filter((toke) => toke.Type != tkn.EOL);
+            let a = items.pop();
+            items.push([a,b].join('\n')); // item
+            this.nextToken();
+            this.nextToken();
+        }
     }
 
     if (items.length > 0) {
