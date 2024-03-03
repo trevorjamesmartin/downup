@@ -17,7 +17,7 @@
     "markdown"
   ],
   "author": "trevor.j.martin@gmail.com",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "esbuild": "0.20.0",
     "jest": "^29.7.0",

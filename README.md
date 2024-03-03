@@ -8,9 +8,14 @@ The practical use of markdown as intermediary language bewteen client and applic
 
 _feel free to fork the repo_
 
+## Acknowledgements
+
+This library is a work in progress with current efforts aiming to meet the [commonmark spec](https://spec.commonmark.org/). Any 
+
+
 ## Getting Started
 
-- this was written for frontend code
+- this was primarily written for the frontend code
 - it assumes nothing about the quality of your code
 
 Download or clone the repo
@@ -60,6 +65,5 @@ _(optional)_ to override the default tags
 ```
 
 for the input parameters expected, see [defaultTags.js](./defaultTags.js)
-at the most basic level, your replacement should return a string
-
+at the most basic level, tag functions return a string
 
