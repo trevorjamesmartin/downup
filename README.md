@@ -37,7 +37,8 @@ _import the ECMAScript module_
 
 _write your wrapper function_
 
-```function toHTML(markdown) {
+```
+function toHTML(markdown) {
     let lexer = new downup.Lexer(markdown);
     let parser = new downup.Parser(lexer);
     let html = parser.Parse();
