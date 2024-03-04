@@ -1,0 +1,138 @@
+/* Define --main-bg-color here */
+:root {
+        --main-bg-color: #011627;
+        --main-fg-color: #bdc1c6;
+        --cursor: #9ca1aa;
+        --color0: #1d3b53;
+        --color1: #fc514e;
+        --color2: #a1cd5e;
+        --color3: #e3d18a;
+        --color4: #82aaff;
+        --color5: #c792ea;
+        --color6: #7fdbca;
+        --color7: #a1aab8;
+        --color8: #7c8f8f;
+        --color9: #ff5874;
+        --color10: #21c7a8;
+        --color11: #ecc48d;
+        --color12: #82aaff;
+        --color13: #ae81ff;
+        --color14: #7fdbca;
+        --color15: #d6deeb;
+        --selection_background: #b2ceee;
+        --selection_foreground: #080808;
+}
+
+body {
+	line-height: 1;
+        background-color: var(--main-bg-color);
+        color: var(--main-fg-color);
+        font-size: 100%;
+}
+
+h1 {
+  font-size: 2em;
+}
+
+h2 {
+  font-size: 1.5em;
+}
+
+h3 {
+  font-size: 1.17em;
+}
+
+h4 {
+  font-size: 1em;
+}
+
+h5 {
+  font-size: 0.83em;
+}
+
+h6 {
+  font-size: 0.67em;
+}
+
+p {
+  font-size: 0.875em;
+}
+
+ul {
+  display: block;
+  list-style-type: disc;
+  margin-top: 1em;
+  margin-bottom: 1em;
+  margin-left: 0;
+  margin-right: 0;
+  padding-left: 1.25em;
+}
+
+table {
+    border-collapse: collapse;
+    border-spacing: 1em;
+    margin: 25px 0;
+    font-size: 0.9em;
+    font-family: sans-serif;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+    border: 1px solid var(--main-fg-color);
+    border-radius: 3px;
+
+}
+
+table th,
+table td {
+    padding: 0.2em 0.4em;
+}
+
+table tbody tr {
+    border-bottom: 1px solid var(--main-fg-color);
+}
+
+
+table tbody tr:last-of-type {
+    border-bottom: 2px solid var(--main-fg-color);
+}
+
+/* Zebra striping 
+tr:nth-of-type(even) { 
+  background: var(--main-fg-color);
+  color: var(--main-bg-color);
+}*/
+
+thead tr {
+    background-color: var(--main-fg-color);
+    color: var(--main-bg-color);
+    letter-spacing: 1px;
+    border-bottom: 1px solid var(--main-fg-color);
+}
+
+/* unvisited link */
+a:link {
+  color: var(--color1);
+}
+
+/* visited link */
+a:visited {
+  color: var(--color2);
+}
+
+/* mouse over link */
+a:hover {
+  background-color: var(--selection_background);
+  color: var(--selection_foreground);
+}
+
+/* selected link */
+a:active {
+  color: var(--color4);
+}
+
+code {
+  display: block;
+  width: fit-content;
+  padding: 0.7em 1em;
+  background-color: #000;
+  color: #fff;
+  border-radius: 0.5em;
+}
