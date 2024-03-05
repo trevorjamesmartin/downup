@@ -65,6 +65,6 @@ _(optional)_ to override the default tags
     ...
 ```
 
-for the input parameters expected, see [defaultTags.js](./defaultTags.js)
-at the most basic level, tag functions return a string
+for the input parameters expected, see [defaultTags.js](./defaultTags.js).
+_(tag functions return a string)_
 
