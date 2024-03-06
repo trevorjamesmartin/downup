@@ -19,15 +19,15 @@ describe("commonmark", () => {
         let example = [
             {
                 input: `\tfoo\tbaz\t\tbim\n`, 
-                expected: `<pre><code>foo	baz		bim\n</code></pre>`
+                expected: `<pre><code>foo    baz        bim\n</code></pre>`
             },
             {
                 input: `  \tfoo\tbaz\t\tbim\n`, 
-                expected: `<pre><code>foo	baz		bim\n</code></pre>`
+                expected: `<pre><code>foo    baz        bim\n</code></pre>`
             },       
             {
-                input: `    a	a\n    ὐ	a\n`, 
-                expected: `<pre><code>a\ta\nὐ\ta\n</code></pre>`
+                input: `\ta\ta\n\tὐ\t\ta\n`, 
+                expected: `<pre><code>a    a\nὐ        a\n</code></pre>`
             },
             {
                 input: `- foo\n\n\t\tbar\n`,
@@ -36,17 +36,14 @@ describe("commonmark", () => {
             },
             {
                 input: `- foo\n\t\tbar\n`,
-                // @todo : preserve whitespace inside codeblock
-                expected: "<ul><li>foo\n<pre><code>bar</code></pre></li></ul>"
+                expected: "<ul><li>foo\n<pre><code>    bar</code></pre></li></ul>"
             }
         ];
-
 
         for (let {input, expected} of example) {
             let lexer = new Lexer(input);
             let parser = new Parser(lexer);
             let output = parser.Parse();
-            //console.log(output);
             expect(output).toBe(expected);
         }
 

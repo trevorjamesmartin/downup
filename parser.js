@@ -224,7 +224,7 @@ Parser.prototype.parseWhitespace = function() {
     let wspace = this.filter((tk) => tk.Type === tkn.WSPACE);
     let text = wspace;
     if (wspace.length > 3 || wspace.includes('\t')) {
-        text = this.parseCodeBlock(wspace);
+        text = this.parseCodeBlock();
         return this.tagFns.codeblock({ text });
     }
     return text;
@@ -239,16 +239,15 @@ Parser.prototype.isCodeBlock = function() {
 
 Parser.prototype.parseCodeBlock = function() {
     let cb = '';
-    let newline = true;
-    let start = this.currentToken;
-    for (let t = start; newline && this.isCodeBlock(); this.nextToken()) {
+    let line = this.currentToken.Literal.slice(this.lex.spacetabs ? 
+ 4 : 1);
+    for (let _ = true; this.isCodeBlock(); this.nextToken()) {
         this.nextToken();
-        let line = this.filter((toke) => toke.Type !== tkn.EOL);
+        line += this.filter((toke) => toke.Type !== tkn.EOL);
         cb += this.escapeHTML(line);
         this.nextToken();
-        newline = (this.currentToken.Type === tkn.EOL);
-        // add newline char
-        cb += newline ? this.currentToken.Literal : "";
+        cb += (this.currentToken.Type === tkn.EOL) ? this.currentToken.Literal : "";
+        line = '';
     }
     return cb;
 }
@@ -614,19 +613,22 @@ Parser.prototype.parseUnorderedList = function() {
     let items =[];
 
     while (wspace === tkn.WSPACE && bullets.includes(b)) {
-        this.nextToken(); // -
-        this.nextToken(); // ' '
-        items.push(this.filter((toke) => toke.Type != tkn.EOL)); // item
-        this.nextToken() // EOL
-        this.nextToken() // -
+        this.nextToken(); // bul
+        this.nextToken(); // space
+        line = this.filter((toke) => toke.Type != tkn.EOL) // read line
+        items.push(line); // [item,]
+        this.nextToken()  // eol
+        this.nextToken() // bul ?
         b = this.currentToken.Literal;
         wspace = this.peekToken.Type;
+
         while ([tkn.WSPACE, tkn.CONTENT].includes(this.currentToken.Type)){
-            let b = this.filter((toke) => toke.Type != tkn.EOL);
-            let a = items.pop();
-            items.push([a,b].join('\n')); // item
+            line = this.filter((toke) => toke.Type != tkn.EOL);
+            let prevLine = items.pop(); // last item
+            items.push([prevLine, line].join('\n')); // revised item
             this.nextToken();
             this.nextToken();
+            b = this.currentToken.Literal;
         }
     }
 

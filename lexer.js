@@ -15,6 +15,7 @@ class Lexer {
         this.readPosition = 0;
         this.ch = '';
         this.readChar();
+        this.spacetabs = true;
     }
 }
 
@@ -101,8 +102,8 @@ Lexer.prototype.NextToken = function() {
             break;
 
         case '\t':
-            //literal = this.filter((ch) => ch === '\t');
-            token = new Token(tkn.WSPACE, this.ch);
+            literal = this.spacetabs ? '    ' : '\t'; 
+            token = new Token(tkn.WSPACE, literal);
             break;
 
         case '\n':
@@ -248,6 +249,21 @@ Lexer.hydrate = function(state) {
 
 Lexer.prototype.Clone = function() {
     return Lexer.hydrate(this.toString());
+}
+
+
+// extending some String attributes to the Lexer
+
+Lexer.prototype.indexOf = function(literal) {
+    return this.input.indexOf(literal);
+}
+
+Lexer.prototype.search = function(params) {
+    return this.input.search(params);
+}
+
+Lexer.prototype.split = function(literal) {
+    return this.input.split(literal)?.map((segment) => new Lexer(segment)) || [];
 }
 
 module.exports = Lexer;
