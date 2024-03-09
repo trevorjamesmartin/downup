@@ -615,7 +615,7 @@ Parser.prototype.parseUnorderedList = function() {
     while (wspace === tkn.WSPACE && bullets.includes(b)) {
         this.nextToken(); // bul
         this.nextToken(); // space
-        line = this.filter((toke) => toke.Type != tkn.EOL) // read line
+        let line = this.filter((toke) => toke.Type != tkn.EOL) // read line
         items.push(line); // [item,]
         this.nextToken()  // eol
         this.nextToken() // bul ?
