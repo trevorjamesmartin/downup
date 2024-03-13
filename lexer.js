@@ -102,7 +102,8 @@ Lexer.prototype.NextToken = function() {
             break;
 
         case '\t':
-            literal = this.spacetabs ? '    ' : '\t'; 
+            //literal = this.spacetabs ? '    ' : '\t';
+            literal = '\t';
             token = new Token(tkn.WSPACE, literal);
             break;
 
