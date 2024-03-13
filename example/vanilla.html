@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="stylesheet" href="nightfly.css">
+    <title>downup - standalone</title>
+</head>
+<body>
+    <script type="module">
+        const placeholder = "# hello dragon";
+        
+        const { default: downup } = await import("/vendor.mjs");
+
+        const updatePage = () => {
+            let markdowntext = document.querySelector('#markdown-text').value;
+            let down = markdowntext.length > 0 ? markdowntext : globalThis.downup.placeholder;
+            let up = new downup.Parser(new downup.Lexer(down)).Parse();
+            document.querySelector('#markup-text').innerHTML = up;
+        }
+
+        function debounce(f, timeout=420) {
+            let timer;
+            return (...params) => {
+                clearTimeout(timer);
+                timer = setTimeout(() => f.apply(this, params), timeout);
+            };
+        }
+        globalThis.downup = { 
+            process: debounce(() => updatePage()),
+            placeholder 
+        };
+        
+        document.querySelector('#markdown-text').placeholder = placeholder;
+        
+        if (document.querySelector('#markdown-text').value === ""){
+            console.log('set placeholder');
+        }
+        console.log('loaded downup!');
+
+        updatePage();
+
+    </script>
+    <i>ecmascript module loaded by the browser</i>
+    <hr />
+    <div id="downup-wrapper">
+        <textarea 
+            id="markdown-text" 
+            name="markdown-text" 
+            onkeyup="downup.process()"
+            ></textarea>
+        <div id="markup-text"></div>
+    </div>
+</body>
+</html>

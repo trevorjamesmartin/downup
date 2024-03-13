@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="stylesheet" href="nightfly.css">
+    <title>downup - ReactJS</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/babel-standalone@6/babel.js"></script>
+</head>
+<body>
+    <script type="module">
+        const { default: downup } = await import("/vendor.mjs");
+        
+        const updatePage = () => {
+            let down = document.querySelector('#markdown-text').value;
+            let up = new downup.Parser(new downup.Lexer(down)).Parse();
+            document.querySelector('#markup-text').innerHTML = up;
+        }
+
+        function debounce(f, timeout=420) {
+            let timer;
+            return (...params) => {
+                clearTimeout(timer);
+                timer = setTimeout(() => f.apply(this, params), timeout);
+            };
+        }
+        
+        globalThis.downup = { process: debounce(() => updatePage()) };
+    </script>
+    <div id="downup-reaction"></div>
+    <script data-plugins="transform-es2015-modules-umd" type="text/babel">
+        // Define a component called Greetings
+        function Greetings() {
+            return <h1>Hello readers, Thankyou for reading this blog !</h1>;
+        }
+        // Render the component to the DOM
+        const container = document.getElementById("downup-reaction");
+        const root = ReactDOM.createRoot(container);
+        root.render(<Greetings />);
+    </script>
+</body>
+</html>
+

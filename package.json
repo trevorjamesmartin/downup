@@ -9,9 +9,10 @@
     "npm": ">= 10.2.3"
   },
   "scripts": {
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --verbose",
-    "build": "esbuild index.js --bundle --minify --format=esm --outfile=vendor.mjs",
-    "start": "npm run build && npx serve ."
+    "test":   "node --experimental-vm-modules node_modules/jest/bin/jest.js --verbose",
+    "build":  "esbuild index.js --bundle --minify --format=esm --outfile=dist/vendor.mjs",
+    "example":"esbuild index.js --bundle --minify --format=esm --outfile=example/vendor.mjs",
+    "start":  "npm run example && npx serve example"
   },
   "keywords": [
     "markdown"
