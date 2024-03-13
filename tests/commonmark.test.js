@@ -37,7 +37,7 @@ const todaysTests = [
 //'List items',
 //'Lists',
 //'Inlines',
-i//'Code spans',
+//'Code spans',
 //'Emphasis and strong emphasis',
 //'Links',
 //'Images',
