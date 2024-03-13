@@ -57,7 +57,13 @@ module.exports = {
 
     blockquote: (html) => `<blockquote>${html}</blockquote>`,
     
-    codeblock: ({text}) => `<pre><code>${text}</code></pre>`,
+    codeblock: ({text}) => {
+        let code = text.trim();
+        if (text.endsWith('\n')) {
+            code += '\n';
+        }
+        return `<pre><code>${code}</code></pre>` + "\n";
+    },
 
 
 };
