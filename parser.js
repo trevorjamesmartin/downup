@@ -239,8 +239,7 @@ Parser.prototype.isCodeBlock = function() {
 
 Parser.prototype.parseCodeBlock = function() {
     let cb = '';
-    let line = this.currentToken.Literal.slice(this.lex.spacetabs ? 
- 4 : 1);
+    let line = this.currentToken.Literal;//.slice(this.lex.spacetabs ? 4 : 1);
     for (let _ = true; this.isCodeBlock(); this.nextToken()) {
         this.nextToken();
         line += this.filter((toke) => toke.Type !== tkn.EOL);
@@ -249,12 +248,16 @@ Parser.prototype.parseCodeBlock = function() {
         cb += (this.currentToken.Type === tkn.EOL) ? this.currentToken.Literal : "";
         line = '';
     }
+
     return cb;
 }
 
 Parser.prototype.parseBacktick = function() {
     let lit = this.currentToken.Literal;
     this.nextToken();
+    if (this.currentToken.Type === tkn.EOL) {
+        this.nextToken();
+    }
     let code = this.parseUntil(lit) || '';
     
     let text = this.escapeHTML(code);
