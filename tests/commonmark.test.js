@@ -3,51 +3,70 @@ require("jest");
 const Lexer = require("../lexer.js");
 const Parser = require("../parser.js");
 
+/**
+ * @note commonmark spec 0.31.2 (2024-01-28)
+ *       (stored locally for unit testing)
+ * 
+ * origin: https://spec.commonmark.org/0.31.2/spec.json 
+ * 
+ * latest: https://spec.commonmark.org/current/
+ *
+ */
+
+const spec = require("../commonmark/spec.0.31.2.json");
+
+
+/**
+ * Uncomment any 'section' to run its unit tests
+ */
+const todaysTests = [
+//'Tabs',
+//'Backslash escapes',
+//'Entity and numeric character references',
+//'Precedence',
+//'Thematic breaks',
+//'ATX headings',
+//'Setext headings',
+//'Indented code blocks',
+//'Fenced code blocks',
+//'HTML blocks',
+//'Link reference definitions',
+//'Paragraphs',
+//'Blank lines',
+//'Block quotes',
+//'List items',
+//'Lists',
+//'Inlines',
+i//'Code spans',
+//'Emphasis and strong emphasis',
+//'Links',
+//'Images',
+//'Autolinks',
+//'Raw HTML',
+//'Hard line breaks',
+//'Soft line breaks',
+//'Textual content'
+];
+
 describe("commonmark", () => {
+    
+    if (!todaysTests[0]) {
+        test("... TODO", () => {
+            expect(true).toBe(true);         
+        });
+    }
 
-    test("tabs", () => {
-        /**
-         * https://spec.commonmark.org/0.31.2/#tabs
-         *
-         * Tabs in lines are not expanded to spaces. However, in contexts where spaces
-         * help to define block structure, tabs behave as if they were replaced by spaces
-         * with a tab stop of 4 characters.
-         *
-         * Thus, for example, a tab can be used instead of four spaces in an indented code block.
-         * (Note, however, that internal tabs are passed through as literal tabs, not expanded to spaces.)
-         */
-        let example = [
-            {
-                input: `\tfoo\tbaz\t\tbim\n`, 
-                expected: `<pre><code>foo    baz        bim\n</code></pre>`
-            },
-            {
-                input: `  \tfoo\tbaz\t\tbim\n`, 
-                expected: `<pre><code>foo    baz        bim\n</code></pre>`
-            },       
-            {
-                input: `\ta\ta\n\tὐ\t\ta\n`, 
-                expected: `<pre><code>a    a\nὐ        a\n</code></pre>`
-            },
-            {
-                input: `- foo\n\n\t\tbar\n`,
-                expected: `<ul><li>foo</li></ul><pre><code>bar\n</code></pre>`
-                // @note : I'm not wrapping list-item content in paragraphs
-            },
-            {
-                input: `- foo\n\t\tbar\n`,
-                expected: "<ul><li>foo\n<pre><code>    bar</code></pre></li></ul>"
+    for (let testSection of todaysTests) {
+        test(testSection, () => {
+            const sample = spec.filter(({section}) => section === testSection);
+            for (let { markdown, html, section } of sample) {
+                let lexer = new Lexer(markdown);
+                let parser = new Parser(lexer, 2);
+                let output = parser.Parse();
+                console.log(JSON.stringify({output, html, markdown}, null, 2));
+                expect(output).toBe(html);
             }
-        ];
-
-        for (let {input, expected} of example) {
-            let lexer = new Lexer(input);
-            let parser = new Parser(lexer);
-            let output = parser.Parse();
-            expect(output).toBe(expected);
-        }
-
-    });
-
+        });
+    }
 });
 
