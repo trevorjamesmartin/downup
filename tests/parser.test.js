@@ -21,7 +21,7 @@ describe("Parser test", () => {
 
     test("parse code block", () => {
         let input = "code: `<br>`";
-        let expectedOutput = "code: <pre><code>&lt;br&gt;</code></pre>";
+        let expectedOutput = "code: <pre><code>&lt;br&gt;</code></pre>\n";
         let lex = new Lexer(input);
         let p = new Parser(lex);
         expect(p.Parse(0)).toBe(expectedOutput);
