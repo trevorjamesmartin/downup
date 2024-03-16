@@ -29,6 +29,14 @@
               inherit inputs pkgs;
               modules = [
                 {
+                  difftastic.enable = true;
+
+                  # https://devenv.sh/reference/options/
+                  packages = with pkgs; [
+                    nodejs
+                    jq
+                  ];
+
                   languages.javascript = {
                     enable = true;
                     package = pkgs.nodejs_latest; 
@@ -37,18 +45,13 @@
                       install.enable = true;
                     };
                   };
-                  
-                  difftastic.enable = true;
-
-                  # https://devenv.sh/reference/options/
-                  packages = with pkgs; [
-                    nodejs
-                  ]; 
 
                   enterShell = ''
                     [[ ! -d ./node_modules ]] && npm install
                     [[ ! -f ./vendor.mjs ]] && npm run build
-                    echo "downUp <Javascript development shell>"
+                    echo "... "
+                    echo "<$(cat package.json | jq .name) environment>"
+                    echo "{ \"node\" : { \"required\": $(cat package.json |jq .engines.node), \"installed\": \"$(node --version)\" }, \"npm\" : { \"required\": $(cat package.json |jq .engines.npm), \"installed\":\"$(npm --version)\" } }" | jq .
                   '';
                 }
               ];
