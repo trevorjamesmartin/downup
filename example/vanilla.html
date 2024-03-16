@@ -11,14 +11,20 @@
     <title>downup - standalone</title>
 </head>
 <body>
+    <nav class="crumbs">
+      <ol>
+        <li class="crumb"><a href="/">downup</a></li>
+        <li class="crumb"><i>as is</i></li>
+      </ol>
+    </nav>
     <script type="module">
-        const placeholder = "# hello dragon";
-        
+        const placeholder="# markdown text";
+
         const { default: downup } = await import("/vendor.mjs");
 
         const updatePage = () => {
             let markdowntext = document.querySelector('#markdown-text').value;
-            let down = markdowntext.length > 0 ? markdowntext : globalThis.downup.placeholder;
+            let down = markdowntext.length > 0 ? markdowntext : "";
             let up = new downup.Parser(new downup.Lexer(down)).Parse();
             document.querySelector('#markup-text').innerHTML = up;
         }
@@ -31,7 +37,7 @@
             };
         }
         globalThis.downup = { 
-            process: debounce(() => updatePage()),
+            process: updatePage,// debounce(() => updatePage()),
             placeholder 
         };
         
@@ -45,8 +51,7 @@
         updatePage();
 
     </script>
-    <i>ecmascript module loaded by the browser</i>
-    <hr />
+
     <div id="downup-wrapper">
         <textarea 
             id="markdown-text" 

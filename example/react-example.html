@@ -9,41 +9,55 @@
     <link rel="manifest" href="/site.webmanifest">
     <link rel="stylesheet" href="nightfly.css">
     <title>downup - ReactJS</title>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script type="text/javascript" src="https://unpkg.com/babel-standalone@6/babel.js"></script>
 </head>
 <body>
-    <script type="module">
-        const { default: downup } = await import("/vendor.mjs");
-        
-        const updatePage = () => {
-            let down = document.querySelector('#markdown-text').value;
-            let up = new downup.Parser(new downup.Lexer(down)).Parse();
-            document.querySelector('#markup-text').innerHTML = up;
-        }
-
-        function debounce(f, timeout=420) {
-            let timer;
-            return (...params) => {
-                clearTimeout(timer);
-                timer = setTimeout(() => f.apply(this, params), timeout);
-            };
-        }
-        
-        globalThis.downup = { process: debounce(() => updatePage()) };
-    </script>
+    <nav class="crumbs">
+      <ol>
+        <li class="crumb"><a href="/">downup</a></li>
+        <li class="crumb"><i>with React</i></li>
+      </ol>
+    </nav>
     <div id="downup-reaction"></div>
-    <script data-plugins="transform-es2015-modules-umd" type="text/babel">
-        // Define a component called Greetings
-        function Greetings() {
-            return <h1>Hello readers, Thankyou for reading this blog !</h1>;
-        }
-        // Render the component to the DOM
-        const container = document.getElementById("downup-reaction");
-        const root = ReactDOM.createRoot(container);
-        root.render(<Greetings />);
+    <script type="module">
+        const { default: downup } = await import('./vendor.mjs');
+        globalThis.downup = downup;
     </script>
+    <script data-plugins="transform-es2015-modules-umd" type="text/babel">
+
+function Downup({ markdown }) {
+        const outputRef = React.useRef();
+        const downup = window.downup || {};
+        const {Lexer, Parser, tkn} = downup;
+        if (Parser) {
+                let markup = markdown && 
+                    new Parser(new Lexer(markdown)).Parse();
+                if (outputRef.current) {
+                        outputRef.current.innerHTML = markup;
+                }
+        }
+        return <div class="react-downup" ref={outputRef} />
+}
+
+function DownupReactor() {
+        const [state, setState] = React.useState({ markdown: "# Hello World" });
+        return (<div>
+                <textarea 
+                    id="markdown-text" 
+                    name="markdown-text"
+                    placeholder="# markdown text"
+                    onKeyUp={(e) => setState({markdown: e.target.value})}></textarea>
+                <Downup markdown={state.markdown} />
+        </div>)
+}
+
+const container = document.getElementById("downup-reaction");
+const root = ReactDOM.createRoot(container);
+root.render(<DownupReactor />);
+    </script>
+
 </body>
 </html>
 
