@@ -33,19 +33,17 @@
 
                   # https://devenv.sh/reference/options/
                   packages = with pkgs; [
-                    nodejs
                     jq
                   ];
 
                   languages.javascript = {
                     enable = true;
-                    package = pkgs.nodejs_latest; 
+                    package = pkgs.nodejs_18;
                     npm = {
                       enable = true;
                       install.enable = true;
                     };
                   };
-
                   enterShell = ''
                     [[ ! -d ./node_modules ]] && npm install
                     [[ ! -f ./vendor.mjs ]] && npm run build
