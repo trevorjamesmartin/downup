@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="stylesheet" href="nightfly.css">
+    <title>downup - web component</title>
+</head>
+<body>
+    <nav class="crumbs">
+      <ol>
+        <li class="crumb"><a href="/">downup</a></li>
+        <li class="crumb"><i>web component</i></li>
+      </ol>
+    </nav>
+
+    <down-up />
+
+    <script type="module">
+        const { default: downup } = await import('./vendor.mjs');
+        const { Parser, Lexer, tkn } = downup;
+
+        class DownUp extends HTMLElement {
+
+            constructor() {
+                super();
+                this.markdown = "";
+                this.markup = "";
+            }
+
+            connectedCallback() {
+                const shadow = this.attachShadow({mode: "open"});
+                const input = document.createElement("textarea");
+                const output = document.createElement("div");
+
+                output.setAttribute("id", "markup-text");
+                output.setAttribute("name", "markup-text");
+                
+                input.setAttribute("id", "markdown-text");
+                input.setAttribute("name", "markdown-text");
+
+                input.setAttribute("placeholder", "type markdown text here");
+
+                input.addEventListener("keyup", function (e) {
+                    this.markdown = e.target.value;
+                    this.markup = new Parser(new Lexer(this.markdown)).Parse();
+                    shadow.querySelector('#markup-text').innerHTML = this.markup;
+                });
+
+                shadow.appendChild(input);
+                shadow.appendChild(output);
+            }
+        }
+        
+        customElements.define("down-up", DownUp);
+    </script>
+</body>
+</html>
+
