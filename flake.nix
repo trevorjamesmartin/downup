@@ -15,8 +15,33 @@
       forEachSystem = nixpkgs.lib.genAttrs (import systems);
     in
     {
-      packages = forEachSystem (system: {
+      packages = forEachSystem (system:
+      let
+        pkgs = nixpkgs.legacyPackages.${system};
+
+        # (fixes apple sillicon "exec format error")
+        pkgsLinux = if pkgs.system == "aarch64-darwin"
+                    then nixpkgs.legacyPackages.aarch64-linux
+                    else nixpkgs.legacyPackages.x86_64-linux;
+      in
+      {
         devenv-up = self.devShells.${system}.default.config.procfileScript;
+
+        # for more details on how to use dockerTools,
+        # see https://nixos.org/nixpkgs/manual/#sec-pkgs-dockerTools
+        docker = pkgs.dockerTools.buildLayeredImage {
+          name = "downup";
+          tag = "latest";
+          config = {
+            # layered docker image from nix flake
+            Cmd = [
+              "${pkgsLinux.bash}/bin/bash"
+              "-c"
+              "${pkgsLinux.fortune}/bin/fortune | ${pkgsLinux.cowsay}/bin/cowsay"
+            ];
+          };
+        };
+
       });
 
       devShells = forEachSystem
